@@ -666,7 +666,7 @@ body.far-view #updateBar{bottom:calc(env(safe-area-inset-bottom,0px) + 80px);}
       <div class="row"><span>Beta 压力包（总开关）</span>
         <input type="checkbox" data-key="pressurePack">
       </div>
-      <p class="hint">包含：每段压力档位、段内预警、开场发令、倒数日冲刺。关掉就回到之前的行为，方便对比。</p>
+      <p class="hint">默认关闭。打开后启用：每段压力档位、段内预警、开场发令、倒数日冲刺。也可以直接点底部 Beta 按钮一键开关。</p>
       <div class="row"><span>段内预警（结束前提醒）</span>
         <input type="checkbox" data-key="preWarn">
       </div>
@@ -909,7 +909,7 @@ const DEFAULTS = {
   soundEscalate: true,
   endGentle: true,
   cloudVoice: false,
-  pressurePack: true,
+  pressurePack: false,
   preWarn: true,
   preWarnMin: 3,
   tickTock: false,
@@ -2345,7 +2345,7 @@ function checkCues(p, e, cur){
   }
 
   /* 考场滴答：整分钟一声，最后 5 分钟每 30 秒 */
-  if (cfg.tickTock) {
+  if (cfg.pressurePack !== false && cfg.tickTock) {
     const remainMin = totalMin - elapsedMin;
     const step = remainMin <= 5 ? 0.5 : 1;
     const slot = Math.floor(elapsedMin / step);
