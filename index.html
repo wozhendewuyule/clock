@@ -149,7 +149,16 @@ body.far-view #alertB{padding:5vh 6vw;gap:2.6vh;}
 body.far-view #bTitle{font-size:clamp(30px,11vh,104px);line-height:1.1;}
 body.far-view #bSub{font-size:clamp(17px,5.4vh,46px);line-height:1.42;}
 body.far-view #bFoot{font-size:clamp(13px,3.4vh,27px);}
-body.far-view #btnContinue{font-size:clamp(15px,3.4vh,24px);padding:0 40px;min-height:52px;}
+body.far-view #bCountdown{
+  position:relative;z-index:2;
+  margin-top:1.2vh;padding-top:1.6vh;
+  border-top:1px solid rgba(255,255,255,.18);
+  font-size:clamp(13px,3.1vh,30px);
+  color:rgba(255,255,255,.78);
+  letter-spacing:.06em;font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+}
+#btnContinue{font-size:clamp(15px,3.4vh,24px);padding:0 40px;min-height:52px;}
 
 /* ---------- 控制条 ---------- */
 #controls{
@@ -535,6 +544,7 @@ body.far-view #updateBar{bottom:calc(env(safe-area-inset-bottom,0px) + 80px);}
   <div id="bTitle"></div>
   <div id="bSub"></div>
   <div id="bFoot"></div>
+  <div id="bCountdown" class="hidden"></div>
   <button id="btnContinue" class="btn">继续</button>
 </div>
 
@@ -741,6 +751,10 @@ body.far-view #updateBar{bottom:calc(env(safe-area-inset-bottom,0px) + 80px);}
       <div class="row"><span>显示剩余时间</span>
         <input type="checkbox" data-key="showRemain">
       </div>
+      <div class="row"><span>结束页显示倒数日</span>
+        <input type="checkbox" data-key="endShowCountdown">
+      </div>
+      <p class="hint">整组结束那屏底部会多一行「距 联考 …」。默认开启。</p>
       <div class="row"><span>跟随云端语音</span>
         <input type="checkbox" data-key="cloudVoice">
       </div>
@@ -786,7 +800,7 @@ body.far-view #updateBar{bottom:calc(env(safe-area-inset-bottom,0px) + 80px);}
 </div>
 <div id="toast"></div>
 
-<script id="presetData">window.__PRESET__={"id":"pwa-20261114b","config":{"groups":[{"id":"g-main","name":"素描","segments":[30,45,45,60],"segmentsText":"30,45,45,60","segMeta":[{"label":"","sound":"","title":"起型","subtitle":"先把位置定住，加油！","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"铺大关系","subtitle":"明暗大胆压，别抠细节","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"揉擦","subtitle":"你得擦完是个人吧","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"进一步细化","subtitle":"画前再推远看看大关系","footer":"-S'y","autoClose":""}],"endMeta":{"label":"","sound":"","title":"考试结束","subtitle":"请各位考生有序离场","footer":"-S'y","autoClose":0}},{"id":"gmwesib3l15jl","name":"速写","segments":[30,60,30],"segmentsText":"30，60，30","segMeta":[{"label":"","sound":"","title":"起型","subtitle":"抓动态，别磨蹭","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"画人","subtitle":"大胆下笔，别描线","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"画背景","subtitle":"几笔带过，别抢主体","footer":"-S'y","autoClose":""}],"endMeta":{"label":"","sound":"","title":"速写结束","subtitle":"放下笔，退远看看","footer":"-S'y","autoClose":""}},{"id":"gmwesjmr7sxq0","name":"色彩","segments":[25,60,45,20,30],"segmentsText":"25，60，45，20，30","segMeta":[{"label":"","sound":"","title":"起型","subtitle":"加油宝贝们！","footer":"-S'y","autoClose":3},{"label":"","sound":"","title":"铺大色","subtitle":"咋样了～！","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"主体物塑造","subtitle":"该抠细节了，往实里画","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"收尾","subtitle":"快画！死手，快快快！","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"要晾干哦！","subtitle":"","footer":"-S'y","autoClose":""}],"endMeta":{"label":"","sound":"","title":"考试结束","subtitle":"请各位考生有序离场","footer":"-S'y","autoClose":0}}],"activeGroupId":"gmwesjmr7sxq0","repeat":1,"alertBaseSeconds":3,"alertTemplate":"已过 {n} 分钟","beepSound":"bell","vibrate":true,"reduceFlash":false,"title":"抬起头。","subtitle":"这一段时间已经过去了，\n剩下的不会等你。","footer":"—— 你写给自己的话","bgType":"gradient","bgColor1":"#1a0505","bgColor2":"#5c0d0d","animStyle":"typewriter","volume":0.8,"showRemain":true,"autoCloseSeconds":3,"viewMode":"normal","countdownName":"联考","countdownAt":"2026-11-28T08:30","endGentle":true,"cloudVoice":false},"assets":{}};</script>
+<script id="presetData">window.__PRESET__={"id":"pwa-20261114c","config":{"groups":[{"id":"g-main","name":"素描","segments":[30,45,45,60],"segmentsText":"30,45,45,60","segMeta":[{"label":"","sound":"","title":"起型","subtitle":"先把位置定住，加油！","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"铺大关系","subtitle":"明暗大胆压，别抠细节","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"揉擦","subtitle":"你得擦完是个人吧","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"进一步细化","subtitle":"画前再推远看看大关系","footer":"-S'y","autoClose":""}],"endMeta":{"label":"","sound":"","title":"考试结束","subtitle":"请各位考生有序离场","footer":"-S'y","autoClose":0}},{"id":"gmwesib3l15jl","name":"速写","segments":[30,60,30],"segmentsText":"30，60，30","segMeta":[{"label":"","sound":"","title":"起型","subtitle":"抓动态，别磨蹭","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"画人","subtitle":"大胆下笔，别描线","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"画背景","subtitle":"几笔带过，别抢主体","footer":"-S'y","autoClose":""}],"endMeta":{"label":"","sound":"","title":"速写结束","subtitle":"放下笔，退远看看","footer":"-S'y","autoClose":""}},{"id":"gmwesjmr7sxq0","name":"色彩","segments":[25,60,45,20,30],"segmentsText":"25，60，45，20，30","segMeta":[{"label":"","sound":"","title":"起型","subtitle":"加油宝贝们！","footer":"-S'y","autoClose":3},{"label":"","sound":"","title":"铺大色","subtitle":"咋样了～！","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"主体物塑造","subtitle":"该抠细节了，往实里画","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"收尾","subtitle":"快画！死手，快快快！","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"要晾干哦！","subtitle":"","footer":"-S'y","autoClose":""}],"endMeta":{"label":"","sound":"","title":"考试结束","subtitle":"请各位考生有序离场","footer":"-S'y","autoClose":0}}],"activeGroupId":"gmwesjmr7sxq0","repeat":1,"alertBaseSeconds":3,"alertTemplate":"已过 {n} 分钟","beepSound":"bell","vibrate":true,"reduceFlash":false,"title":"抬起头。","subtitle":"这一段时间已经过去了，\n剩下的不会等你。","footer":"—— 你写给自己的话","bgType":"gradient","bgColor1":"#1a0505","bgColor2":"#5c0d0d","animStyle":"typewriter","volume":0.8,"showRemain":true,"autoCloseSeconds":3,"viewMode":"normal","countdownName":"联考","countdownAt":"2026-11-28T08:30","endGentle":true,"cloudVoice":false,"endShowCountdown":true},"assets":{}};</script>
 <script>
 (function(){
 'use strict';
@@ -853,6 +867,7 @@ const DEFAULTS = {
   soundEscalate: true,
   endGentle: true,
   cloudVoice: false,
+  endShowCountdown: true,
   countdownName: '联考',
   countdownAt: '2026-11-28T08:30'
 };
@@ -1945,6 +1960,12 @@ function showStageB(item, level){
   alertB.style.background = bgCss();
 
   const tEl = $('#bTitle'), sEl = $('#bSub'), fEl = $('#bFoot');
+  const cdEl = $('#bCountdown');
+  const cdText = (prof.isEnd && cfg.endShowCountdown !== false) ? countdownText() : '';
+  if (cdEl) {
+    cdEl.textContent = cdText;
+    cdEl.classList.toggle('hidden', !cdText);
+  }
   tEl.textContent = '';
   sEl.textContent = '';
   fEl.textContent = '';
