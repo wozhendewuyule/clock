@@ -1,0 +1,2573 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="theme-color" content="#ffffff" />
+<link rel="manifest" href="./manifest.webmanifest" />
+<link rel="apple-touch-icon" href="./icon-180.png" />
+<title>施压时钟</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;}
+html,body{height:100%;margin:0;padding:0;overflow:hidden;overscroll-behavior:none;}
+body{
+  background:#fff;color:#111;
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","PingFang SC","Hiragino Sans GB","Noto Sans SC",system-ui,sans-serif;
+  -webkit-user-select:none;user-select:none;
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+button{font-family:inherit;color:inherit;cursor:pointer;}
+.hidden{display:none !important;}
+
+/* ---------- 主界面 ---------- */
+#app{
+  position:fixed;inset:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:max(10px,env(safe-area-inset-top)) max(18px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(18px,env(safe-area-inset-left));
+}
+#vignette{position:fixed;inset:0;pointer-events:none;z-index:5;transition:box-shadow .5s ease;}
+#clockWrap{display:flex;flex-direction:column;align-items:center;z-index:6;}
+#clock{
+  display:flex;align-items:baseline;
+  font-size:clamp(54px,30vh,220px);
+  font-weight:200;line-height:.82;letter-spacing:-.045em;
+  font-variant-numeric:tabular-nums;
+  transition:color .3s ease;
+}
+#clockSec{font-size:.28em;font-weight:300;opacity:.28;margin-left:.05em;letter-spacing:0;}
+#meta{
+  margin-top:2.8vh;display:flex;gap:clamp(24px,5.5vw,64px);align-items:baseline;
+  font-size:clamp(20px,6.6vh,46px);
+  font-variant-numeric:tabular-nums;color:#111;letter-spacing:-.01em;
+}
+#meta .m{display:flex;align-items:baseline;}
+#meta em{
+  font-style:normal;font-size:.56em;font-weight:500;color:#a8a8ae;
+  margin-right:.34em;letter-spacing:.06em;transform:translateY(-.06em);
+}
+#meta b{font-weight:500;}
+#remainTxt{color:#111;transition:color .5s ease;}
+#remainTxt.hot{color:#e00000;}
+#segLine{
+  margin-top:1.6vh;font-size:clamp(12px,2.7vh,20px);
+  color:#a2a2a8;letter-spacing:.04em;font-variant-numeric:tabular-nums;
+}
+#segLine em{font-style:normal;color:#c4c4ca;}
+#progress{
+  margin-top:1.8vh;width:min(62vw,540px);height:3px;background:#ededf0;
+  border-radius:2px;position:relative;z-index:6;
+}
+#progressFill{
+  position:absolute;left:0;top:0;height:100%;width:0;background:#111;
+  border-radius:2px;transition:width .25s linear,background .5s ease;
+}
+#progressFill.hot{background:#e00000;}
+#ticks{position:absolute;inset:0;}
+#ticks i{position:absolute;top:-3px;width:1px;height:9px;background:#d2d2d8;}
+
+/* ---------- 远距模式（3 米视距，两栏，白底黑字） ---------- */
+#farView{
+  position:fixed;inset:0;display:none;
+  flex-direction:column;
+  background:#fff;color:#111;z-index:8;
+  padding:2.6vh 3.4vw 15vh;
+}
+body.far-view #farView{display:flex;}
+body.far-view #app{display:none;}
+body.far-view #vignette{display:none;}
+
+#farTop{
+  display:flex;justify-content:space-between;align-items:baseline;gap:1.4em;
+  font-size:clamp(14px,5.6vh,34px);color:#6e6e76;letter-spacing:.06em;
+  padding-bottom:1.2vh;flex:0 0 auto;
+}
+
+#farMain{
+  flex:1;display:flex;align-items:center;gap:3vw;min-height:0;
+}
+
+#farLeft{
+  flex:1.45;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:1.4vh;min-width:0;
+}
+#farName{
+  font-size:clamp(24px,13.5vh,108px);font-weight:600;line-height:1.04;
+  letter-spacing:.02em;text-align:center;color:#111;
+  max-width:100%;overflow:hidden;
+}
+#farTag{
+  font-size:clamp(11px,4.2vh,26px);color:#6b6b73;
+  letter-spacing:.2em;text-indent:.2em;margin-bottom:-.3vh;
+}
+#farTime{
+  font-size:clamp(52px,33vh,240px);font-weight:200;line-height:.9;
+  letter-spacing:-.035em;font-variant-numeric:tabular-nums;
+  color:#111;transition:color .4s ease;
+}
+#farTime.hot{color:#e00000;}
+#farBarWrap{width:100%;height:5px;background:#ededf0;border-radius:3px;overflow:hidden;}
+#farBar{height:100%;width:0;background:#111;border-radius:3px;transition:width .3s linear;}
+
+#farRight{
+  flex:1;display:flex;flex-direction:column;justify-content:center;
+  gap:1.5vh;border-left:1px solid #e6e6ea;padding-left:2.8vw;min-width:0;
+}
+#farClock{
+  font-size:clamp(24px,13.2vh,108px);font-weight:300;line-height:1;
+  letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:#111;
+}
+#farClock i{font-style:normal;font-size:.5em;color:#bcbcc2;}
+.fr{
+  display:flex;align-items:baseline;gap:.45em;
+  font-size:clamp(14px,7.6vh,44px);color:#8a8a92;font-variant-numeric:tabular-nums;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.fr em{font-style:normal;font-size:.72em;color:#5f5f68;letter-spacing:.06em;}
+.fr b{font-weight:400;color:#111;font-size:1.36em;letter-spacing:0;}
+.fsep{height:1px;background:#e6e6ea;margin:.4vh 0;}
+/* 段名可能很长，单独收一点字号，保证不被裁切 */
+.fr.next{gap:.34em;}
+.fr.next em{font-size:.68em;}
+.fr.next b{font-size:1.02em;}
+
+body.far-view #toast{bottom:22vh;}
+
+/* 远距模式下，报时两屏同步放大（3 米可读） */
+body.far-view #alertALabel{font-size:clamp(30px,11.5vh,108px);}
+body.far-view #alertAClock{font-size:clamp(56px,33vh,250px);}
+body.far-view #lateBadge{font-size:clamp(12px,2.9vh,21px);}
+body.far-view #alertB{padding:5vh 6vw;gap:2.6vh;}
+body.far-view #bTitle{font-size:clamp(30px,11vh,104px);line-height:1.1;}
+body.far-view #bSub{font-size:clamp(17px,5.4vh,46px);line-height:1.42;}
+body.far-view #bFoot{font-size:clamp(13px,3.4vh,27px);}
+body.far-view #btnContinue{font-size:clamp(15px,3.4vh,24px);padding:0 40px;min-height:52px;}
+
+/* ---------- 控制条 ---------- */
+#controls{
+  position:fixed;left:50%;transform:translateX(-50%);
+  bottom:calc(env(safe-area-inset-bottom,0px) + 14px);
+  display:flex;gap:10px;align-items:center;z-index:30;
+  transition:opacity .35s ease;
+}
+body.controls-hidden #controls{opacity:0;pointer-events:none;}
+.btn{
+  min-height:44px;min-width:44px;padding:0 18px;border-radius:22px;
+  border:1px solid #e2e2e6;background:#fff;font-size:15px;font-weight:500;
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  transition:transform .12s ease,background .2s ease;
+}
+.btn:active{transform:scale(.96);}
+.btn.primary{background:#111;color:#fff;border-color:#111;padding:0 28px;}
+.btn.ghost{border-color:transparent;background:transparent;color:#8a8a8e;}
+.btn.small{min-height:34px;padding:0 12px;font-size:13px;border-radius:17px;}
+
+/* ---------- 报时 A：冲击 ---------- */
+.layer{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;z-index:50;}
+.layer.on{display:flex;}
+
+#alertA{background:#b30000;color:#fff;overflow:hidden;}
+#alertA.flash-on{background:#ff2f2f;}
+#alertA.no-flash{background:#c40000;}
+
+#alertA .shaker{display:flex;align-items:center;justify-content:center;}
+#alertA .impact{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.8vh;
+  animation:slamIn .55s cubic-bezier(.2,1.35,.4,1) both;
+}
+@keyframes slamIn{
+  0%{transform:scale(1.75);opacity:0;}
+  55%{transform:scale(.97);opacity:1;}
+  78%{transform:scale(1.035);}
+  100%{transform:scale(1);}
+}
+#alertA.level-2 .shaker{animation:shakeA .2s linear .6s infinite;}
+#alertA.level-3 .shaker{animation:shakeB .13s linear .55s infinite;}
+@keyframes shakeA{
+  0%,100%{transform:translate(0,0);}
+  25%{transform:translate(-4px,2px);}
+  50%{transform:translate(3px,-3px);}
+  75%{transform:translate(-2px,-1px);}
+}
+@keyframes shakeB{
+  0%,100%{transform:translate(0,0);}
+  20%{transform:translate(-7px,4px);}
+  45%{transform:translate(6px,-5px);}
+  70%{transform:translate(-4px,-4px);}
+  90%{transform:translate(3px,5px);}
+}
+#alertAClock{
+  display:flex;align-items:baseline;
+  font-size:clamp(58px,33vh,240px);font-weight:200;line-height:.82;letter-spacing:-.045em;
+  font-variant-numeric:tabular-nums;text-shadow:0 0 60px rgba(255,255,255,.35);
+}
+#alertASec{font-size:.28em;font-weight:300;opacity:.55;margin-left:.05em;}
+#alertALabel{
+  font-size:clamp(22px,7vh,62px);font-weight:600;letter-spacing:.03em;
+  text-align:center;line-height:1.12;text-shadow:0 0 40px rgba(255,255,255,.3);
+}
+#alertALabel .num{font-size:1.4em;font-weight:800;}
+#lateBadge{
+  font-size:clamp(11px,2vh,15px);padding:4px 12px;border-radius:999px;
+  border:1px solid rgba(255,255,255,.65);opacity:.9;letter-spacing:.05em;
+}
+
+/* ---------- 报时 B：自定义画面 ---------- */
+#alertB{
+  color:#fff;padding:6vh 7vw;gap:2.2vh;text-align:center;overflow:hidden;
+  background:#0a0a0a;
+}
+#alertB.on{animation:fadeIn .55s ease both;}
+#alertB::before{
+  content:'';position:absolute;inset:0;pointer-events:none;z-index:1;
+  background:radial-gradient(ellipse at 50% 50%, rgba(210,20,20,.30) 0%, rgba(0,0,0,0) 62%);
+}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+#bTitle{
+  position:relative;z-index:2;
+  font-size:clamp(28px,9.4vh,90px);font-weight:700;line-height:1.14;
+  letter-spacing:.01em;white-space:pre-line;
+  text-shadow:0 2px 30px rgba(0,0,0,.6);
+}
+#bSub{
+  position:relative;z-index:2;
+  font-size:clamp(16px,3.8vh,34px);font-weight:400;line-height:1.5;opacity:.88;
+  white-space:pre-line;max-width:82vw;
+  text-shadow:0 2px 20px rgba(0,0,0,.55);
+}
+#bFoot{
+  position:relative;z-index:2;
+  font-size:clamp(12px,2.2vh,20px);opacity:.45;letter-spacing:.09em;
+  white-space:pre-line;
+}
+#alertB.style-slam #bTitle{animation:slamIn .6s cubic-bezier(.2,1.35,.4,1) both;}
+#alertB.style-glow #bTitle{
+  animation:glowPulse 2.6s ease-in-out infinite;
+  text-shadow:0 0 24px rgba(255,255,255,.35),0 0 68px rgba(255,70,70,.5);
+}
+@keyframes glowPulse{
+  0%,100%{opacity:.9;filter:brightness(1);}
+  50%{opacity:1;filter:brightness(1.28);}
+}
+#bParticles{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:1;}
+#bParticles i{
+  position:absolute;width:4px;height:4px;border-radius:50%;background:#fff;
+  box-shadow:0 0 12px rgba(255,120,120,.95);
+  animation-name:floatUp;animation-timing-function:linear;animation-iteration-count:infinite;
+}
+@keyframes floatUp{
+  0%{transform:translateY(24px) scale(.5);opacity:0;}
+  18%{opacity:1;}
+  100%{transform:translateY(-140px) scale(1.5);opacity:0;}
+}
+#btnContinue{
+  position:relative;z-index:3;margin-top:1.5vh;
+  background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.5);color:#fff;
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+  padding:0 34px;animation:fadeIn .6s .5s ease both;
+}
+
+/* ---------- 设置面板 ---------- */
+#settings{
+  position:fixed;inset:0;z-index:80;background:#f6f6f8;color:#111;
+  display:none;flex-direction:column;
+}
+#settings.on{display:flex;}
+.sheet-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 18px;border-bottom:1px solid #e4e4e8;background:#fff;
+  padding-top:calc(10px + env(safe-area-inset-top));
+}
+.sheet-title{font-size:16px;font-weight:600;}
+.sheet-body{
+  flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding:14px 18px calc(32px + env(safe-area-inset-bottom));
+}
+.sheet-body section{margin-bottom:20px;}
+.sheet-body h3{
+  font-size:12px;font-weight:600;color:#8a8a90;margin:0 0 6px;
+  letter-spacing:.08em;
+}
+.row{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:10px 0;border-bottom:1px solid #ebebef;font-size:15px;
+}
+.row.col{flex-direction:column;align-items:stretch;gap:8px;}
+.row > span{color:#333;}
+.row input[type=number],.row input[type=text],.row input[type=datetime-local],.row select{
+  font-family:inherit;font-size:15px;padding:8px 10px;border:1px solid #dbdbe0;
+  border-radius:8px;background:#fff;color:#111;min-width:100px;text-align:right;
+  -webkit-appearance:none;appearance:none;
+}
+.row select{text-align:left;padding-right:26px;
+  background-image:linear-gradient(45deg,transparent 50%,#999 50%),linear-gradient(135deg,#999 50%,transparent 50%);
+  background-position:calc(100% - 14px) 50%,calc(100% - 9px) 50%;
+  background-size:5px 5px,5px 5px;background-repeat:no-repeat;}
+.row textarea{
+  width:100%;font-family:inherit;font-size:15px;padding:9px 10px;
+  border:1px solid #dbdbe0;border-radius:8px;background:#fff;color:#111;
+  min-height:60px;resize:vertical;line-height:1.5;
+}
+.row input[data-key="segmentsText"]{text-align:left;letter-spacing:.04em;}
+.row input[type=color]{
+  width:52px;height:34px;padding:2px;border:1px solid #dbdbe0;border-radius:8px;background:#fff;
+}
+.row input[type=range]{width:52%;accent-color:#111;}
+.row input[type=checkbox]{width:24px;height:24px;accent-color:#111;margin:0;}
+.row input[type=file]{font-size:12px;max-width:56%;color:#666;}
+.hint{font-size:12px;color:#9a9aa0;line-height:1.6;margin:6px 0 0;}
+.chips{display:flex;flex-wrap:wrap;gap:8px;}
+.chip{
+  display:inline-flex;align-items:center;gap:6px;padding:6px 8px 6px 12px;
+  background:#fff;border:1px solid #dbdbe0;border-radius:999px;font-size:13px;
+}
+.chip button{border:0;background:transparent;font-size:17px;line-height:1;padding:0 4px;color:#a0a0a6;}
+.addnode{display:flex;gap:8px;}
+.addnode input{
+  flex:1;text-align:left;font-family:inherit;font-size:15px;padding:8px 10px;
+  border:1px solid #dbdbe0;border-radius:8px;background:#fff;color:#111;
+}
+.fileline{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.fileline .name{font-size:13px;color:#666;max-width:46%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.danger{color:#e00000;border-color:#f0c8c8;}
+
+/* ---------- 组切换 ---------- */
+#topLine{
+  display:flex;align-items:baseline;gap:1.4em;
+  margin-bottom:1.2vh;max-width:96vw;
+}
+#countdown{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#groupLabel{
+  font-size:clamp(11px,2.1vh,16px);color:#b8b8be;letter-spacing:.18em;text-indent:.18em;
+}
+#countdown{
+  font-size:clamp(11px,2.1vh,16px);color:#c0c0c6;
+  letter-spacing:.05em;font-variant-numeric:tabular-nums;
+}
+#farCountdown{
+  color:#8a8a92;font-variant-numeric:tabular-nums;
+  min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+#farChip{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.groupbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+.gchip{
+  padding:8px 15px;border-radius:999px;border:1px solid #dbdbe0;
+  background:#fff;font-size:14px;line-height:1;
+}
+.gchip.active{background:#111;color:#fff;border-color:#111;}
+#groupNameInput{text-align:left;}
+
+/* ---------- 分段报时列表 ---------- */
+.seglist{display:flex;flex-direction:column;gap:8px;margin-top:4px;}
+.segitem{border:1px solid #e2e2e6;border-radius:12px;background:#fff;overflow:hidden;}
+.seghead{
+  width:100%;display:flex;align-items:center;gap:10px;padding:12px 14px;
+  background:transparent;border:0;font-size:15px;text-align:left;
+}
+.seghead .len{color:#8a8a90;font-size:13px;}
+.seghead .spacer{flex:1;}
+.seghead .badge{font-size:11px;color:#c40000;background:#fdecec;border-radius:999px;padding:2px 8px;}
+.seghead .chev{color:#aaa;font-size:17px;line-height:1;transition:transform .2s ease;display:inline-block;}
+.segitem.open .chev{transform:rotate(90deg);}
+.segbody{display:none;padding:2px 14px 14px;border-top:1px solid #f0f0f3;}
+.segitem.open .segbody{display:block;}
+.segbody .row{padding:8px 0;}
+.segbody .row input[type=text],.segbody .row select{min-width:130px;}
+.segbody input[type=text],.segbody textarea{text-align:left;}
+.segbody textarea{min-height:46px;}
+
+/* ---------- 阶段 B 自动关闭进度条 ---------- */
+#bTimerBar{
+  position:absolute;left:0;top:0;height:3px;width:100%;z-index:4;
+  background:rgba(255,255,255,.55);
+}
+
+/* ---------- 横屏提示 ---------- */
+#rotateHint{
+  position:fixed;inset:0;z-index:200;background:#111;color:#fff;
+  display:none;flex-direction:column;align-items:center;justify-content:center;
+  gap:18px;font-size:16px;text-align:center;padding:24px;
+}
+@media (orientation:portrait){
+  #rotateHint:not(.dismissed){display:flex;}
+}
+#rotateHint .ico{font-size:46px;animation:rot 2.4s ease-in-out infinite;}
+@keyframes rot{
+  0%,35%{transform:rotate(0deg);}
+  65%,100%{transform:rotate(90deg);}
+}
+
+/* ---------- 音频未解锁提示 ---------- */
+#audioLock{
+  position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 10px);
+  transform:translateX(-50%);
+  background:#111;color:#fff;padding:9px 18px;border-radius:999px;
+  font-size:14px;letter-spacing:.02em;z-index:400;
+  pointer-events:none;box-shadow:0 6px 24px rgba(0,0,0,.25);
+}
+
+/* ---------- Toast ---------- */
+#toast{
+  position:fixed;left:50%;bottom:88px;transform:translateX(-50%) translateY(10px);
+  background:rgba(0,0,0,.84);color:#fff;padding:10px 18px;border-radius:12px;
+  font-size:13px;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;
+  z-index:300;max-width:80vw;text-align:center;
+}
+#toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+
+<div id="rotateHint">
+  <div class="ico">📱</div>
+  <div>请把手机横过来使用</div>
+  <button id="rotateDismiss" class="btn ghost" style="color:#777;border-color:transparent;">仍然继续</button>
+</div>
+
+<div id="app">
+  <div id="vignette"></div>
+  <div id="clockWrap">
+    <div id="topLine">
+      <span id="groupLabel"></span>
+      <span id="countdown"></span>
+    </div>
+    <div id="clock"><span id="clockHM">9:00</span><span id="clockSec">:00</span></div>
+    <div id="meta">
+      <span class="m"><em>已过</em><b id="elapsedTxt">00:00:00</b></span>
+      <span class="m"><em>剩余</em><b id="remainTxt">03:00:00</b></span>
+    </div>
+    <div id="segLine"><em id="segTxt"></em></div>
+    <div id="progress">
+      <div id="progressFill"></div>
+      <div id="ticks"></div>
+    </div>
+  </div>
+</div>
+
+<div id="controls">
+  <button id="btnPrimary" class="btn primary">开始</button>
+  <button id="btnReset" class="btn">重置</button>
+  <button id="btnFar" class="btn ghost">远距</button>
+  <button id="btnSettings" class="btn ghost">设置</button>
+</div>
+
+<!-- 远距模式（3 米视距） -->
+<div id="farView">
+  <div id="farTop">
+    <span id="farChip"></span>
+    <span id="farCountdown"></span>
+  </div>
+  <div id="farMain">
+    <div id="farLeft">
+      <div id="farName"></div>
+      <div id="farTag">本段剩余</div>
+      <div id="farTime">00:00</div>
+      <div id="farBarWrap"><div id="farBar"></div></div>
+    </div>
+    <div id="farRight">
+      <div id="farClock">9:45<i>:00</i></div>
+      <div class="fr"><em>已过</em><b id="farElapsed">00:00:00</b></div>
+      <div class="fr"><em>剩余</em><b id="farRemain">00:00:00</b></div>
+      <div class="fsep"></div>
+      <div class="fr next"><em>下一段</em><b id="farNext">—</b></div>
+    </div>
+  </div>
+</div>
+
+<!-- 阶段 A：冲击 -->
+<div id="alertA" class="layer">
+  <div class="shaker">
+    <div class="impact">
+      <div id="alertAClock"><span id="alertAHM">9:45</span><span id="alertASec">:00</span></div>
+      <div id="alertALabel"></div>
+      <div id="lateBadge" class="hidden">延迟触发</div>
+    </div>
+  </div>
+</div>
+
+<!-- 阶段 B：自定义画面 -->
+<div id="alertB" class="layer">
+  <div id="bTimerBar" class="hidden"></div>
+  <div id="bParticles"></div>
+  <div id="bTitle"></div>
+  <div id="bSub"></div>
+  <div id="bFoot"></div>
+  <button id="btnContinue" class="btn">继续</button>
+</div>
+
+<!-- 设置 -->
+<div id="settings">
+  <div class="sheet-head">
+    <div class="sheet-title">设置</div>
+    <button id="btnCloseSettings" class="btn small">完成</button>
+  </div>
+  <div class="sheet-body">
+
+    <section>
+      <h3>计时与分组</h3>
+      <div class="row col">
+        <span>组（每套方案一个组）</span>
+        <div class="groupbar">
+          <div id="groupChips" class="chips"></div>
+          <button type="button" id="btnAddGroup" class="btn small">＋ 新建组</button>
+        </div>
+      </div>
+      <div class="row"><span>当前组名</span>
+        <input type="text" id="groupNameInput" maxlength="16" placeholder="如 素描">
+      </div>
+      <div class="row"><span>删除当前组</span>
+        <button type="button" id="btnDelGroup" class="btn small danger">删除这一组</button>
+      </div>
+
+      <div class="row col">
+        <span>这一组的分段（分钟，用逗号分隔）</span>
+        <input type="text" data-key="segmentsText" placeholder="45,45,45,45">
+        <p class="hint" id="segSummary"></p>
+      </div>
+      <p class="hint">每走完一段就报一次时。比如 30,45,45,30,30 = 一组 180 分钟，
+        报时点依次在第 30 / 75 / 120 / 150 / 180 分钟。不同组各存各的分段和自定义。</p>
+
+      <label class="row"><span>这一组重复几次</span>
+        <input type="number" min="1" max="20" step="1" data-key="repeat">
+      </label>
+      <p class="hint">整组跑完后再从头循环一遍，强度会继续随进度上升。</p>
+
+      <label class="row"><span>首次冲击时长（秒）</span>
+        <input type="number" min="1" max="12" step="0.5" data-key="alertBaseSeconds">
+      </label>
+      <p class="hint">强度随进度递增：一档 ×1.0，二档 ×1.33，三档 ×1.66。默认 3s → 4s → 5s。</p>
+    </section>
+
+    <section>
+      <h3>分段报时（每段可单独设置）</h3>
+      <div id="segList" class="seglist"></div>
+      <p class="hint">点开某一段就能单独改它的报时文案、音效、文字、语音和消失时间。
+        <b>音效和自动消失留空 = 跟随上一段</b>；文字留空 = 用全局默认（不会串上一段的内容）。</p>
+    </section>
+
+    <section>
+      <h3>整组结束（单独一套）</h3>
+      <div class="seglist">
+        <div class="segitem" id="endItem">
+          <button type="button" class="seghead" id="endHead">
+            <span class="idx">整组结束</span>
+            <span class="len">最后一段走完时</span>
+            <span class="spacer"></span>
+            <span class="badge hidden" id="endBadge">已自定义</span>
+            <span class="chev">›</span>
+          </button>
+          <div class="segbody" id="endBody"></div>
+        </div>
+      </div>
+      <p class="hint">留空的项先回落到「最后一段」的设置，再回落到全局默认。
+        这一下必定是最高强度档。</p>
+    </section>
+
+    <section>
+      <h3>全局默认 · 报时冲击（阶段 A）</h3>
+      <label class="row"><span>文案模板</span>
+        <input type="text" data-key="alertTemplate" placeholder="已过 {n} 分钟">
+      </label>
+      <p class="hint">可用占位符：{n} 已过分钟数、{seg} 第几段、{total} 共几段、{len} 本段分钟、{group} 第几组。</p>
+
+      <div class="row"><span>音效</span>
+        <select data-key="beepSound">
+          <option value="bell">铃音</option>
+          <option value="chime">钟声</option>
+          <option value="beep">电子</option>
+          <option value="none">静音</option>
+        </select>
+      </div>
+      <div class="row"><span>试听</span>
+        <button id="btnTestSound" class="btn small">播放一次</button>
+      </div>
+      <label class="row"><span>音效重复次数</span>
+        <input type="number" min="0" max="8" step="1" data-key="soundRepeat">
+      </label>
+      <p class="hint">0 = 自动：一档 1 次、二档 2 次、三档 3 次（越靠后越密）。填 1~8 则固定次数。</p>
+      <label class="row"><span>重复间隔（毫秒）</span>
+        <input type="number" min="0" max="3000" step="50" data-key="soundInterval">
+      </label>
+      <p class="hint">0 = 自动：一档 700、二档 500、三档 350 毫秒。填 120~3000 则固定间隔。</p>
+      <div class="row"><span>震动</span>
+        <input type="checkbox" data-key="vibrate">
+      </div>
+      <div class="row"><span>减弱闪烁</span>
+        <input type="checkbox" data-key="reduceFlash">
+      </div>
+      <p class="hint">开启后改为静态红底，不做高频闪烁。闪烁频率始终不超过 3Hz。</p>
+      <div class="row"><span>预览整段报时</span>
+        <button id="btnPreview" class="btn small">立即演示</button>
+      </div>
+    </section>
+
+    <section>
+      <h3>全局默认 · 自定义画面（阶段 B）</h3>
+      <div class="row"><span>自动消失（秒，0 = 只手动关闭）</span>
+        <input type="number" min="0" max="120" step="1" data-key="autoCloseSeconds">
+      </div>
+      <p class="hint">到时间自动退回计时界面；点「继续」也能提前关掉。分段里可以单独覆盖这个值。</p>
+
+      <div class="row col">
+        <span>主标题</span>
+        <textarea data-key="title" placeholder="抬头。"></textarea>
+      </div>
+      <div class="row col">
+        <span>副标题</span>
+        <textarea data-key="subtitle" placeholder="支持换行"></textarea>
+      </div>
+      <div class="row col">
+        <span>落款</span>
+        <textarea data-key="footer" placeholder="—— 你自己"></textarea>
+      </div>
+
+      <div class="row"><span>背景</span>
+        <select data-key="bgType">
+          <option value="solid">纯色</option>
+          <option value="gradient">渐变</option>
+          <option value="image">图片</option>
+        </select>
+      </div>
+      <div class="row" id="bgColor1Row"><span>背景色</span>
+        <input type="color" data-key="bgColor1">
+      </div>
+      <div class="row" id="bgColor2Row"><span>渐变第二色</span>
+        <input type="color" data-key="bgColor2">
+      </div>
+      <div class="row" id="bgImageRow">
+        <span>背景图</span>
+        <div class="fileline">
+          <span class="name" id="bgName">未选择</span>
+          <input type="file" id="bgFile" accept="image/*">
+          <button id="btnClearBg" class="btn small danger">清除</button>
+        </div>
+      </div>
+
+      <div class="row"><span>动画</span>
+        <select data-key="animStyle">
+          <option value="typewriter">逐字打字机</option>
+          <option value="slam">冲击缩放</option>
+          <option value="particles">粒子扩散</option>
+          <option value="glow">辉光呼吸</option>
+        </select>
+      </div>
+
+      <div class="row col">
+        <span>语音</span>
+        <div class="fileline">
+          <span class="name" id="voiceName">未上传</span>
+          <input type="file" id="voiceFile" accept="audio/*">
+          <button id="btnPlayVoice" class="btn small">试听</button>
+          <button id="btnDelVoice" class="btn small danger">删除</button>
+        </div>
+        <p class="hint">上传你的录音，报时第二阶段会播放。音频存在本机浏览器里，不会上传到任何服务器。</p>
+      </div>
+    </section>
+
+    <section>
+      <h3>搬到手机上</h3>
+      <div class="row col">
+        <span>配置码（不含语音/图片，纯文字）</span>
+        <textarea id="codeBox" placeholder="点「生成配置码」，然后复制；手机上粘贴后再点「应用」"></textarea>
+        <div class="fileline">
+          <button type="button" id="btnGenCode" class="btn small">生成配置码</button>
+          <button type="button" id="btnCopyCode" class="btn small">复制</button>
+          <button type="button" id="btnApplyCode" class="btn small">应用</button>
+        </div>
+        <p class="hint">配置码只带文字和数字设置。语音、背景图要走下面的完整导出。</p>
+      </div>
+      <div class="row"><span>导出完整 HTML（含语音、图片）</span>
+        <button type="button" id="btnExportHtml" class="btn small">导出文件</button>
+      </div>
+      <p class="hint">导出的 HTML 已经内置你的全部设置，传到手机打开即可，不用再配置。</p>
+    </section>
+
+    <section>
+      <h3>其他</h3>
+      <div class="row"><span>音量</span>
+        <input type="range" min="0" max="1" step="0.05" data-key="volume">
+      </div>
+      <div class="row"><span>显示剩余时间</span>
+        <input type="checkbox" data-key="showRemain">
+      </div>
+      <div class="row"><span>四边泛红压迫感</span>
+        <input type="checkbox" data-key="pressureEdge">
+      </div>
+      <p class="hint">开启后，随着时间推移屏幕四周会慢慢晕开一圈红。默认关闭。</p>
+      <div class="row"><span>倒数日名称</span>
+        <input type="text" data-key="countdownName" placeholder="如 联考">
+      </div>
+      <div class="row"><span>倒数到（精确到分钟）</span>
+        <input type="datetime-local" data-key="countdownAt">
+      </div>
+      <p class="hint">留空就不显示。显示成「距 联考 13天23小时58分钟」，时间过了会变成「已过」。</p>
+
+      <div class="row"><span>恢复默认设置</span>
+        <button id="btnResetAll" class="btn small danger">全部清除</button>
+      </div>
+      <p class="hint">会同时删除已上传的语音和背景图。</p>
+    </section>
+
+    <p class="hint">
+      说明：网页切到后台或被锁屏时，系统会挂起脚本，无法保证准点响铃，回到前台会自动补一次提醒并标注「延迟触发」。
+      iOS 不支持网页震动，也请确认侧面静音开关已关闭。
+    </p>
+
+  </div>
+</div>
+
+<div id="audioLock" class="hidden">🔇 点一下屏幕以启用声音</div>
+<div id="toast"></div>
+
+<script id="presetData">window.__PRESET__={"id":"pwa-20261113c","config":{"groups":[{"id":"g-main","name":"素描","segments":[30,45,45,30,30],"segmentsText":"30，45，45，30，30","segMeta":[{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""},{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""},{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""},{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""},{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""}],"endMeta":{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""}},{"id":"gmwesib3l15jl","name":"速写","segments":[30,60,30],"segmentsText":"30，60，30","segMeta":[{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""},{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""},{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""}],"endMeta":{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""}},{"id":"gmwesjmr7sxq0","name":"色彩","segments":[25,60,45,20,30],"segmentsText":"25，60，45，20，30","segMeta":[{"label":"","sound":"","title":"起型","subtitle":"加油宝贝们！","footer":"-S'y","autoClose":3},{"label":"","sound":"","title":"铺大色","subtitle":"咋样了～！","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"主体物塑造","subtitle":"孩子们画的咋样了","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"收尾","subtitle":"快画！死手，快快快！","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"要晾干哦！","subtitle":"","footer":"-S'y","autoClose":""}],"endMeta":{"label":"","sound":"","title":"考试结束","subtitle":"请各位考生有序离场","footer":"-S'y","autoClose":0}}],"activeGroupId":"gmwesjmr7sxq0","repeat":1,"alertBaseSeconds":3,"alertTemplate":"已过 {n} 分钟","beepSound":"bell","vibrate":true,"reduceFlash":false,"title":"抬起头。","subtitle":"这一段时间已经过去了，\n剩下的不会等你。","footer":"—— 你写给自己的话","bgType":"gradient","bgColor1":"#1a0505","bgColor2":"#5c0d0d","animStyle":"typewriter","volume":0.8,"showRemain":true,"autoCloseSeconds":3,"viewMode":"far"},"assets":{}};</script>
+<script>
+(function(){
+'use strict';
+
+/* =========================================================
+   0. 基础工具
+   ========================================================= */
+const $  = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.prototype.slice.call((r || document).querySelectorAll(s));
+const pad2 = n => String(n).padStart(2, '0');
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const escapeHtml = s => String(s).replace(/[&<>"']/g, c => (
+  { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+));
+function fmtHM(d){ return d.getHours() + ':' + pad2(d.getMinutes()); }
+function fmtDur(ms){
+  const s = Math.max(0, Math.floor(ms / 1000));
+  return pad2(Math.floor(s / 3600)) + ':' + pad2(Math.floor(s % 3600 / 60)) + ':' + pad2(s % 60);
+}
+let toastTimer = null;
+function toast(msg){
+  const t = $('#toast');
+  t.textContent = msg;
+  t.classList.add('on');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('on'), 1800);
+}
+
+/* =========================================================
+   1. 配置
+   ========================================================= */
+const STORAGE_KEY = 'pressure-clock:config:v1';
+const DEFAULTS = {
+  /* 组库：每一组是一套可命名的方案（名字 + 分段 + 每段的自定义） */
+  groups: [{
+    id: 'g-sketch',
+    name: '素描',
+    segments: [30, 45, 45, 30, 30],
+    segmentsText: '30,45,45,30,30',
+    segMeta: [],
+    endMeta: { label: '', sound: '', title: '', subtitle: '', footer: '', autoClose: '' }
+  }],
+  activeGroupId: 'g-sketch',
+  repeat: 1,
+  alertBaseSeconds: 3,
+  alertTemplate: '已过 {n} 分钟',
+  beepSound: 'bell',
+  vibrate: true,
+  reduceFlash: false,
+  title: '抬起头。',
+  subtitle: '这一段时间已经过去了，\n剩下的不会等你。',
+  footer: '—— 你写给自己的话',
+  bgType: 'gradient',
+  bgColor1: '#1a0505',
+  bgColor2: '#5c0d0d',
+  animStyle: 'typewriter',
+  volume: 0.8,
+  showRemain: true,
+  autoCloseSeconds: 0,
+  viewMode: 'normal',
+  pressureEdge: false,
+  soundRepeat: 0,
+  soundInterval: 0,
+  countdownName: '',
+  countdownAt: ''
+};
+let cfg = loadCfg();
+
+function loadCfg(){
+  const base = JSON.parse(JSON.stringify(DEFAULTS));
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const saved = JSON.parse(raw);
+      Object.keys(base).forEach(k => {
+        if (k === 'groups') return;                 // 组单独处理
+        if (saved[k] !== undefined) base[k] = saved[k];
+      });
+
+      if (Array.isArray(saved.groups) && saved.groups.length) {
+        base.groups = saved.groups;
+      } else {
+        /* 旧版本存档迁移：把原来的单套分段变成第一组 */
+        let segs = DEFAULTS.groups[0].segments.slice();
+        let text = DEFAULTS.groups[0].segmentsText;
+        if (Array.isArray(saved.segments) && saved.segments.length) {
+          segs = saved.segments.map(Number).filter(n => n > 0);
+          text = (typeof saved.segmentsText === 'string' && saved.segmentsText)
+            ? saved.segmentsText : segs.join(',');
+        }
+        /* 更早的版本只有 nodes + spanMinutes */
+        if (Array.isArray(saved.nodes) && saved.nodes.length && !saved.segments) {
+          const old = saved.nodes.map(Number).filter(n => n > 0).sort((a, b) => a - b);
+          const acc = [];
+          let prev = 0;
+          old.forEach(n => { if (n > prev) { acc.push(n - prev); prev = n; } });
+          if (saved.spanMinutes > prev) acc.push(saved.spanMinutes - prev);
+          if (acc.length) { segs = acc; text = acc.join(','); }
+        }
+        base.groups = [{
+          id: 'g-main',
+          name: '我的组',
+          segments: segs,
+          segmentsText: text,
+          segMeta: Array.isArray(saved.segMeta) ? saved.segMeta : [],
+          endMeta: (saved.endMeta && typeof saved.endMeta === 'object')
+            ? saved.endMeta
+            : JSON.parse(JSON.stringify(DEFAULTS.groups[0].endMeta))
+        }];
+        base.activeGroupId = 'g-main';
+      }
+    }
+  } catch (e) { /* 配置损坏则使用默认值 */ }
+  return base;
+}
+function saveCfg(){
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(cfg)); }
+  catch (e) { toast('配置保存失败，可能是存储空间不足'); }
+}
+
+/* ---------- 组库 ---------- */
+function newGroupId(){
+  return 'g' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+}
+function makeGroup(name, segments){
+  const segs = (segments && segments.length) ? segments.slice() : [45];
+  return {
+    id: newGroupId(),
+    name: name || '新组',
+    segments: segs,
+    segmentsText: segs.join(','),
+    segMeta: [],
+    endMeta: blankSegMeta()
+  };
+}
+function normalizeGroup(g){
+  if (!g || typeof g !== 'object') return null;
+  if (!g.id) g.id = newGroupId();
+  if (typeof g.name !== 'string' || !g.name) g.name = '未命名';
+  if (!Array.isArray(g.segments)) g.segments = [];
+  g.segments = g.segments.map(Number).filter(n => n > 0 && n <= 720);
+  if (!g.segments.length) g.segments = [45];
+  if (typeof g.segmentsText !== 'string' || !g.segmentsText) g.segmentsText = g.segments.join(',');
+  if (!Array.isArray(g.segMeta)) g.segMeta = [];
+  const n = g.segments.length;
+  while (g.segMeta.length < n) g.segMeta.push(blankSegMeta());
+  if (g.segMeta.length > n) g.segMeta.length = n;
+  for (let i = 0; i < n; i++) {
+    if (!g.segMeta[i] || typeof g.segMeta[i] !== 'object') g.segMeta[i] = blankSegMeta();
+    const b = blankSegMeta();
+    Object.keys(b).forEach(k => {
+      if (g.segMeta[i][k] === undefined || g.segMeta[i][k] === null) g.segMeta[i][k] = b[k];
+    });
+  }
+  if (!g.endMeta || typeof g.endMeta !== 'object') g.endMeta = blankSegMeta();
+  const eb = blankSegMeta();
+  Object.keys(eb).forEach(k => {
+    if (g.endMeta[k] === undefined || g.endMeta[k] === null) g.endMeta[k] = eb[k];
+  });
+  return g;
+}
+function activeGroup(){
+  if (!Array.isArray(cfg.groups) || !cfg.groups.length) {
+    cfg.groups = [makeGroup('素描', [30, 45, 45, 30, 30])];
+    cfg.activeGroupId = cfg.groups[0].id;
+  }
+  let g = null;
+  for (let i = 0; i < cfg.groups.length; i++) {
+    if (cfg.groups[i].id === cfg.activeGroupId) { g = cfg.groups[i]; break; }
+  }
+  if (!g) { g = cfg.groups[0]; cfg.activeGroupId = g.id; }
+  return normalizeGroup(g);
+}
+
+/* 把「一组的分段」展开成完整的报时时刻表 */
+function parseSegments(text){
+  return String(text || '').split(/[,，、\s]+/)
+    .map(s => Math.round(Number(s)))
+    .filter(n => isFinite(n) && n > 0 && n <= 720);
+}
+function plan(){
+  const segs = activeGroup().segments.slice();
+  const groups = clamp(Math.round(Number(cfg.repeat) || 1), 1, 20);
+  const list = [];
+  let cum = 0;
+  for (let g = 1; g <= groups; g++) {
+    for (let i = 0; i < segs.length; i++) {
+      cum += segs[i];
+      list.push({
+        at: cum,            // 该段结束时，累计已过多少分钟
+        len: segs[i],       // 本段多少分钟
+        seg: i + 1,         // 组内第几段
+        total: segs.length, // 组内共几段
+        group: g,           // 第几组
+        groups: groups
+      });
+    }
+  }
+  return { segs: segs, groups: groups, list: list, totalMin: cum };
+}
+
+/* 每一段的自定义配置：按段索引存放，空字符串表示「用全局默认」 */
+function blankSegMeta(){
+  return { label: '', sound: '', title: '', subtitle: '', footer: '', autoClose: '' };
+}
+function normalizeSegMeta(){
+  normalizeGroup(activeGroup());
+}
+function segMetaAt(i){
+  const g = activeGroup();
+  return g.segMeta[i];
+}
+function segHasCustom(m){
+  return !!(m && (m.label || m.sound || m.title || m.subtitle || m.footer || m.autoClose));
+}
+
+/* 取某个节点实际生效的报时参数
+   · 文字类：整组结束 → 本段 → 全局默认（不跟上一段，避免串内容）
+   · 音效 / 自动消失：整组结束 → 本段 → 上一段 → … → 全局默认 */
+function profileFor(item){
+  const i = Math.max(0, (item.seg || 1) - 1);
+  const segs = activeGroup().segMeta;
+  const isEnd = (item.seg === item.total && item.group === item.groups);
+  const e = isEnd ? endMeta() : {};
+
+  const pickText = (k, def) => {
+    if (e[k] !== undefined && e[k] !== '') return e[k];
+    const m = segs[i];
+    if (m && m[k] !== undefined && m[k] !== '') return m[k];
+    return def;
+  };
+  const pickChain = (k) => {
+    if (e[k] !== undefined && e[k] !== '') return e[k];
+    for (let j = i; j >= 0; j--) {
+      const m = segs[j];
+      if (m && m[k] !== undefined && m[k] !== '') return m[k];
+    }
+    return '';
+  };
+
+  const sound = pickChain('sound') || cfg.beepSound;
+  const acRaw = pickChain('autoClose');
+  const acNum = Number(acRaw);
+  const autoClose = (acRaw === '' || acRaw === undefined || !isFinite(acNum))
+    ? (Number(cfg.autoCloseSeconds) || 0)
+    : Math.max(0, acNum);
+
+  return {
+    isEnd: isEnd,
+    label: pickText('label', cfg.alertTemplate),
+    sound: sound,
+    title: pickText('title', cfg.title),
+    subtitle: pickText('subtitle', cfg.subtitle),
+    footer: pickText('footer', cfg.footer),
+    autoClose: autoClose,
+    voiceKeys: isEnd ? ['voice:end', 'voice:' + i] : ['voice:' + i]
+  };
+}
+
+/* =========================================================
+   2. IndexedDB（存音频、图片这类大文件）
+   ========================================================= */
+const DB_NAME = 'pressure-clock';
+const DB_STORE = 'assets';
+let dbPromise = null;
+function openDB(){
+  if (dbPromise) return dbPromise;
+  dbPromise = new Promise((resolve, reject) => {
+    if (!('indexedDB' in window)) { reject(new Error('no indexedDB')); return; }
+    let timer = null;
+    let settled = false;
+    const fail = err => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      reject(err || new Error('indexedDB failed'));
+    };
+    /* 某些环境（如 file:// 直接打开）会把 open 请求永久挂起，必须设超时 */
+    timer = setTimeout(() => fail(new Error('indexedDB timeout')), 3000);
+    let req;
+    try { req = indexedDB.open(DB_NAME, 1); }
+    catch (e) { fail(e); return; }
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(DB_STORE)) db.createObjectStore(DB_STORE);
+    };
+    req.onsuccess = () => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      resolve(req.result);
+    };
+    req.onerror = () => fail(req.error);
+  });
+  dbPromise.catch(() => { dbPromise = null; });
+  return dbPromise;
+}
+function idbSet(key, val){
+  return openDB().then(db => new Promise((resolve, reject) => {
+    const tx = db.transaction(DB_STORE, 'readwrite');
+    tx.objectStore(DB_STORE).put(val, key);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  }));
+}
+function idbGet(key){
+  return openDB().then(db => new Promise((resolve, reject) => {
+    const tx = db.transaction(DB_STORE, 'readonly');
+    const rq = tx.objectStore(DB_STORE).get(key);
+    rq.onsuccess = () => resolve(rq.result || null);
+    rq.onerror = () => reject(rq.error);
+  })).catch(() => null);
+}
+function idbDel(key){
+  return openDB().then(db => new Promise((resolve, reject) => {
+    const tx = db.transaction(DB_STORE, 'readwrite');
+    tx.objectStore(DB_STORE).delete(key);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  })).catch(() => {});
+}
+
+/* =========================================================
+   3. 音频
+   ========================================================= */
+let ac = null;
+function audioCtx(){
+  if (!ac) {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return null;
+    try { ac = new AC(); } catch (e) { return null; }
+  }
+  if (ac.state === 'suspended') { ac.resume().catch(() => {}); }
+  return ac;
+}
+function tone(ctx, dest, opt){
+  const t0 = ctx.currentTime + (opt.start || 0);
+  const dur = opt.dur || 1;
+  const osc = ctx.createOscillator();
+  osc.type = opt.type || 'sine';
+  osc.frequency.value = opt.freq || 440;
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(Math.max(opt.peak || 0.2, 0.0002), t0 + (opt.attack || 0.008));
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  osc.connect(g);
+  g.connect(dest);
+  osc.start(t0);
+  osc.stop(t0 + dur + 0.06);
+}
+function playBuiltin(type, level){
+  if (!type || type === 'none') return;
+  const ctx = audioCtx();
+  if (!ctx) return;
+
+  const out = ctx.createGain();
+  out.gain.value = clamp(Number(cfg.volume) || 0, 0, 1);
+  out.connect(ctx.destination);
+
+  /* 重复次数：0 = 自动，随强度 1 / 2 / 3 次 */
+  const rep = Number(cfg.soundRepeat) > 0
+    ? clamp(Math.round(Number(cfg.soundRepeat)), 1, 8)
+    : clamp(level, 1, 3);
+
+  /* 间隔：0 = 自动，随强度 700 / 500 / 350 毫秒 */
+  const gap = Number(cfg.soundInterval) > 0
+    ? clamp(Number(cfg.soundInterval), 120, 3000) / 1000
+    : [0.7, 0.5, 0.35][clamp(level, 1, 3) - 1];
+
+  for (let r = 0; r < rep; r++) {
+    const off = r * gap;
+    if (type === 'bell') {
+      [[523.25, 1], [1046.5, 0.5], [1568, 0.26], [2093, 0.12]].forEach(p => {
+        tone(ctx, out, { freq: p[0], dur: 2.6, peak: 0.26 * p[1], start: off });
+      });
+    } else if (type === 'chime') {
+      [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => {
+        tone(ctx, out, { freq: f, start: off + i * 0.13, dur: 1.5, peak: 0.24 });
+      });
+    } else if (type === 'beep') {
+      [0, 0.22, 0.44].forEach(st => {
+        tone(ctx, out, { freq: 880, type: 'square', start: off + st, dur: 0.14, peak: 0.16 });
+      });
+    }
+    if (level >= 2) tone(ctx, out, { freq: 72, dur: 0.85, peak: 0.5, attack: 0.012, start: off });
+    if (level >= 3) tone(ctx, out, { freq: 52, dur: 1.2, peak: 0.6, attack: 0.012, start: off });
+  }
+}
+
+let audioUnlocked = false;
+const audioLockEl = document.getElementById('audioLock');
+function markAudioUnlocked(){
+  if (audioUnlocked) return;
+  audioUnlocked = true;
+  if (audioLockEl) audioLockEl.classList.add('hidden');
+}
+function showAudioLock(){
+  if (audioUnlocked) return;
+  if (audioLockEl) audioLockEl.classList.remove('hidden');
+}
+/* 任意一次真实触摸都尝试解锁；iOS 只认手势内的 resume */
+function tryUnlockAudio(){
+  const ctx = audioCtx();
+  if (!ctx) return;
+  try { ctx.resume(); } catch (e) {}
+  if (ctx.state === 'running') {
+    try {
+      const b = ctx.createBuffer(1, 1, ctx.sampleRate || 44100);
+      const src = ctx.createBufferSource();
+      src.buffer = b;
+      src.connect(ctx.destination);
+      src.start(0);
+    } catch (e) {}
+    markAudioUnlocked();
+  } else {
+    setTimeout(() => {
+      if (ctx.state === 'running') markAudioUnlocked();
+    }, 120);
+  }
+}
+
+let voiceBuf = null;
+let voiceBufTag = null;
+/* preferKeys 可以是字符串或数组；找不到就逐级回落，最后回落到全局语音 */
+async function playVoice(preferKeys){
+  const ctx = audioCtx();
+  if (!ctx) return null;
+  const list = (Array.isArray(preferKeys) ? preferKeys : (preferKeys ? [preferKeys] : [])).slice();
+  list.push('voice');
+  let key = null;
+  let rec = null;
+  for (let i = 0; i < list.length; i++) {
+    const r = await idbGet(list[i]);
+    if (r && r.blob) { key = list[i]; rec = r; break; }
+  }
+  if (!rec) return null;
+  const tag = key + '|' + rec.name + '|' + rec.blob.size;
+  if (!voiceBuf || voiceBufTag !== tag) {
+    const buf = await rec.blob.arrayBuffer();
+    voiceBuf = await ctx.decodeAudioData(buf);
+    voiceBufTag = tag;
+  }
+  const src = ctx.createBufferSource();
+  src.buffer = voiceBuf;
+  const g = ctx.createGain();
+  g.gain.value = clamp(Number(cfg.volume) || 0, 0, 1);
+  src.connect(g);
+  g.connect(ctx.destination);
+  src.start();
+  return src;
+}
+
+/* =========================================================
+   4. 计时状态机
+   ========================================================= */
+let state = 'idle';       // idle | running | paused
+let accMs = 0;            // 已累计毫秒（暂停前的总和）
+let runStart = 0;         // 本次运行的起点时间戳
+const fired = new Set();  // 已触发过的节点（分钟）
+
+function elapsedMs(){
+  return state === 'running' ? accMs + (Date.now() - runStart) : accMs;
+}
+function setState(s){
+  state = s;
+  renderControls();
+  if (s !== 'running') document.body.classList.remove('controls-hidden');
+  else scheduleHide();
+}
+
+/* =========================================================
+   4.5 断点续跑：刷新、切后台、误关标签页都能接上
+   ========================================================= */
+const RUN_KEY = 'pressure-clock:run:v1';
+let lastRunSave = 0;
+
+function saveRun(force){
+  const now = Date.now();
+  if (!force && now - lastRunSave < 1500) return;
+  lastRunSave = now;
+  try {
+    if (state === 'idle' && accMs === 0 && fired.size === 0) {
+      localStorage.removeItem(RUN_KEY);
+      return;
+    }
+    localStorage.setItem(RUN_KEY, JSON.stringify({
+      v: 1,
+      state: state,
+      accMs: accMs,
+      runStart: runStart,
+      savedAt: now,
+      fired: Array.from(fired),
+      groupId: cfg.activeGroupId
+    }));
+  } catch (e) { /* 存不下就算了，不影响计时 */ }
+}
+/* 一次性配置补丁：从外部写入 window.__PATCH__ 来修正已存在的配置 */
+function takeConfigPatch(){
+  try {
+    const p = window.__PATCH__;
+    if (!p || !p.id || typeof p.apply !== 'function') return false;
+    if (localStorage.getItem('pressure-clock:patch') === p.id) return false;
+    try { localStorage.setItem('pressure-clock:patch', p.id); } catch (e) {}
+    p.apply(cfg);
+    saveCfg();
+    return true;
+  } catch (e) { return false; }
+}
+
+/* 一次性续接标记：从外部写入 window.__RESUME__，用来接上另一台设备/旧版本正在跑的计时 */
+function takeResumeSeed(){
+  try {
+    const s = window.__RESUME__;
+    if (!s || !s.id || !s.runStart) return false;
+    if (localStorage.getItem('pressure-clock:seed') === s.id) return false;
+    try { localStorage.setItem('pressure-clock:seed', s.id); } catch (e) {}
+
+    /* 如果已有更「新」的运行记录，就不覆盖（force 时强制覆盖，用于手动跳转） */
+    if (!s.force) {
+      try {
+        const raw = localStorage.getItem(RUN_KEY);
+        if (raw) {
+          const d = JSON.parse(raw);
+          if (d && Number(d.savedAt) && Number(d.savedAt) > Number(s.runStart)) return false;
+        }
+      } catch (e) {}
+    }
+
+    if (s.groupId && cfg.groups && cfg.groups.some(g => g.id === s.groupId)) {
+      cfg.activeGroupId = s.groupId;
+    }
+    if (s.viewMode === 'far' || s.viewMode === 'normal') {
+      cfg.viewMode = s.viewMode;
+      saveCfg();
+    }
+    state = 'running';
+    accMs = Math.max(0, Number(s.accMs) || 0);
+    runStart = Number(s.runStart);
+    fired.clear();
+    (Array.isArray(s.fired) ? s.fired : []).forEach(n => {
+      const v = Number(n);
+      if (isFinite(v)) fired.add(v);
+    });
+    saveRun(true);
+    return true;
+  } catch (e) { return false; }
+}
+function restoreRun(){
+  let raw = null;
+  try { raw = localStorage.getItem(RUN_KEY); } catch (e) { return false; }
+  if (!raw) return false;
+  let d = null;
+  try { d = JSON.parse(raw); } catch (e) { return false; }
+  if (!d || d.v !== 1) return false;
+  if (d.groupId && d.groupId !== cfg.activeGroupId) return false;
+
+  const savedAt = Number(d.savedAt) || 0;
+  const gap = Date.now() - savedAt;
+  if (!savedAt || gap > 12 * 3600 * 1000) return false;   // 超过 12 小时就不接了
+
+  accMs = Math.max(0, Number(d.accMs) || 0);
+  runStart = Number(d.runStart) || 0;
+  fired.clear();
+  (Array.isArray(d.fired) ? d.fired : []).forEach(n => {
+    const v = Number(n);
+    if (isFinite(v)) fired.add(v);
+  });
+
+  if (d.state === 'running') {
+    if (gap < 2 * 3600 * 1000) {
+      state = 'running';                       // 继续跑，中间离开的时间算进去
+    } else {
+      /* 离开太久：冻结在最后保存的那一刻，按暂停态恢复 */
+      accMs = accMs + Math.max(0, savedAt - runStart);
+      runStart = 0;
+      state = 'paused';
+    }
+  } else if (d.state === 'paused') {
+    state = 'paused';
+    runStart = 0;
+  } else {
+    state = 'idle';
+    runStart = 0;
+  }
+  return true;
+}
+function applyViewMode(){
+  document.body.classList.toggle('far-view', cfg.viewMode === 'far');
+}
+
+/* =========================================================
+   5. DOM 引用
+   ========================================================= */
+const clockHM = $('#clockHM');
+const clockSec = $('#clockSec');
+const elapsedTxt = $('#elapsedTxt');
+const remainTxt = $('#remainTxt');
+const segTxt = $('#segTxt');
+const groupLabel = $('#groupLabel');
+const countdownEl = $('#countdown');
+const farCountdownEl = $('#farCountdown');
+const farView = $('#farView');
+const farChip = $('#farChip');
+const farNext = $('#farNext');
+const farName = $('#farName');
+const farTime = $('#farTime');
+const farBar = $('#farBar');
+const farClock = $('#farClock');
+const farElapsed = $('#farElapsed');
+const farRemain = $('#farRemain');
+const progressFill = $('#progressFill');
+const vignette = $('#vignette');
+const alertA = $('#alertA');
+const alertB = $('#alertB');
+const alertAHM = $('#alertAHM');
+const alertASec = $('#alertASec');
+const alertALabel = $('#alertALabel');
+const lateBadge = $('#lateBadge');
+
+/* =========================================================
+   5.5 远距模式（3 米视距）
+   ========================================================= */
+/* 远距模式下的时间：不足 1 小时用 MM:SS，否则 H:MM:SS */
+function fmtFar(ms){
+  const s = Math.max(0, Math.floor(ms / 1000));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor(s % 3600 / 60);
+  const sec = s % 60;
+  return h > 0 ? (h + ':' + pad2(m) + ':' + pad2(sec)) : (pad2(m) + ':' + pad2(sec));
+}
+/* 段名：用这一段的自定义主标题，没有就退回「第 N 段」 */
+function segNameAt(i){
+  const g = activeGroup();
+  const m = g.segMeta[i];
+  const t = m && m.title ? String(m.title).trim() : '';
+  return t || ('第 ' + (i + 1) + ' 段');
+}
+function updateFarView(p, cur, e){
+  const g = activeGroup();
+  if (cur) {
+    const idx = cur.seg - 1;
+    farName.textContent = segNameAt(idx);
+    farChip.textContent =
+      escapeHtml(g.name) +
+      (p.groups > 1 ? ' · 第 ' + cur.group + '/' + p.groups + ' 轮' : '') +
+      ' · 第 ' + cur.seg + '/' + cur.total + ' 段';
+    const hasNext = cur.seg < cur.total;
+    farNext.textContent = hasNext
+      ? segNameAt(cur.seg)
+      : (cur.group < p.groups ? '本组最后' : '最后一段');
+    const left = cur.at * 60000 - e;
+    farTime.textContent = fmtFar(left);
+    farTime.classList.toggle('hot', left < cur.len * 60000 * 0.2);
+    const segStart = (cur.at - cur.len) * 60000;
+    farBar.style.width = (clamp((e - segStart) / (cur.len * 60000), 0, 1) * 100).toFixed(2) + '%';
+  } else {
+    farName.textContent = (g.endMeta && g.endMeta.title) ? g.endMeta.title : '已结束';
+    farChip.textContent = '全部完成';
+    farNext.textContent = '—';
+    farTime.textContent = '00:00';
+    farTime.classList.remove('hot');
+    farBar.style.width = '100%';
+  }
+  const now = new Date();
+  farClock.innerHTML = fmtHM(now) + '<i>:' + pad2(now.getSeconds()) + '</i>';
+  farElapsed.textContent = fmtDur(e);
+  farRemain.textContent = fmtDur(Math.max(0, p.totalMin * 60000 - e));
+}
+function setFarMode(on){
+  document.body.classList.toggle('far-view', on);
+  cfg.viewMode = on ? 'far' : 'normal';
+  saveCfg();
+  if (on) {
+    document.body.classList.add('controls-hidden');
+    scheduleHide();
+  } else {
+    document.body.classList.remove('controls-hidden');
+  }
+  renderControls();
+  tick();
+}
+
+/* =========================================================
+   6. 渲染
+   ========================================================= */
+function tick(){
+  const now = new Date();
+  const hm = fmtHM(now);
+  const sec = ':' + pad2(now.getSeconds());
+  clockHM.textContent = hm;
+  clockSec.textContent = sec;
+  if (alertActive) { alertAHM.textContent = hm; alertASec.textContent = sec; }
+
+  const p = plan();
+  const gname = activeGroup().name;
+  if (gname !== lastGroupLabel) { groupLabel.textContent = gname; lastGroupLabel = gname; }
+  const cd = countdownText();
+  if (cd !== lastCountdown) {
+    countdownEl.textContent = cd;
+    if (farCountdownEl) farCountdownEl.textContent = cd;
+    lastCountdown = cd;
+  }
+  const totalMin = Math.max(1, p.totalMin);
+  const spanMs = totalMin * 60000;
+  const e = elapsedMs();
+
+  elapsedTxt.textContent = fmtDur(e);
+
+  const remain = Math.max(0, spanMs - e);
+  remainTxt.textContent = cfg.showRemain ? fmtDur(remain) : '--:--:--';
+  const ratio = clamp(e / spanMs, 0, 1);
+  remainTxt.classList.toggle('hot', ratio > 0.7);
+
+  /* 当前在第几段 */
+  let cur = null;
+  for (let i = 0; i < p.list.length; i++) {
+    if (e < p.list[i].at * 60000) { cur = p.list[i]; break; }
+  }
+  if (cur) {
+    const left = cur.at * 60000 - e;
+    segTxt.textContent =
+      (p.groups > 1 ? '第 ' + cur.group + '/' + p.groups + ' 组 · ' : '') +
+      '第 ' + cur.seg + '/' + cur.total + ' 段 · 本段剩 ' + fmtDur(left);
+  } else {
+    segTxt.textContent = '整组已完成 · 共 ' + totalMin + ' 分钟';
+  }
+
+  progressFill.style.width = (ratio * 100).toFixed(2) + '%';
+  progressFill.classList.toggle('hot', ratio > 0.7);
+
+  if (document.body.classList.contains('far-view')) updateFarView(p, cur, e);
+
+  /* 四边泛红的「压迫感」：默认关闭，可在设置里打开 */
+  if (cfg.pressureEdge && ratio > 0.05) {
+    vignette.style.boxShadow = 'inset 0 0 ' + (ratio * 90).toFixed(0) + 'px ' +
+      (ratio * 14).toFixed(0) + 'px rgba(224,0,0,' + (ratio * 0.30).toFixed(3) + ')';
+  } else if (vignette.style.boxShadow) {
+    vignette.style.boxShadow = 'none';
+  }
+
+  /* 自愈：如果弹层已经不在，但 alertActive 还卡着，就复位，避免后续报时全部失灵 */
+  if (alertActive && !alertA.classList.contains('on') && !alertB.classList.contains('on')) {
+    alertActive = false;
+  }
+
+  saveRun(false);
+  if (!alertActive) checkNodes(e);
+}
+
+function checkNodes(e){
+  const list = plan().list;
+  let target = null;
+  /* 一次只弹最近的那个：直接跳过已经错过的更早节点，避免连弹一串 */
+  for (let i = 0; i < list.length; i++) {
+    const it = list[i];
+    if (fired.has(it.at)) continue;
+    if (e >= it.at * 60000) {
+      fired.add(it.at);
+      target = it;
+    }
+  }
+  if (target) fireNode(target, e - target.at * 60000);
+}
+
+function renderControls(){
+  const btn = $('#btnPrimary');
+  if (state === 'idle') btn.textContent = '开始';
+  else if (state === 'running') btn.textContent = '暂停';
+  else btn.textContent = '继续';
+  const far = $('#btnFar');
+  if (far) far.textContent = document.body.classList.contains('far-view') ? '普通' : '远距';
+}
+
+function renderTicks(){
+  const wrap = $('#ticks');
+  wrap.innerHTML = '';
+  const p = plan();
+  const span = Math.max(1, p.totalMin);
+  p.list.forEach(it => {
+    if (it.at >= span) return;
+    const i = document.createElement('i');
+    i.style.left = (it.at / span * 100).toFixed(3) + '%';
+    wrap.appendChild(i);
+  });
+}
+
+/* 控制条自动隐藏 */
+let hideTimer = null;
+let lastGroupLabel = null;
+let lastCountdown = null;
+function scheduleHide(){
+  clearTimeout(hideTimer);
+  if (state !== 'running') return;
+  hideTimer = setTimeout(() => {
+    if (state === 'running' && !alertActive) document.body.classList.add('controls-hidden');
+  }, 3200);
+}
+function revealControls(){
+  document.body.classList.remove('controls-hidden');
+  scheduleHide();
+}
+
+/* =========================================================
+   7. 报时：阶段 A → 阶段 B
+   ========================================================= */
+let alertActive = false;
+let alertTimer = null;
+let autoCloseTimer = null;
+let flashTimer = null;
+let currentSrc = null;
+let typeTimers = [];
+let bgImageUrl = null;
+
+function labelHtml(it, template){
+  const tpl = String(template || cfg.alertTemplate || '已过 {n} 分钟');
+  const values = {
+    n: it.at, seg: it.seg, total: it.total,
+    len: it.len, group: it.group, groups: it.groups
+  };
+  /* 先按占位符切分，再逐段转义，避免用户文案里带 HTML 被注入 */
+  return tpl.split(/(\{[a-z]+\})/).map(part => {
+    const m = part.match(/^\{([a-z]+)\}$/);
+    if (!m) return escapeHtml(part);
+    const key = m[1];
+    if (!(key in values)) return escapeHtml(part);
+    return key === 'n'
+      ? '<span class="num">' + values[key] + '</span>'
+      : String(values[key]);
+  }).join('');
+}
+function bgCss(){
+  if (cfg.bgType === 'gradient') {
+    return 'linear-gradient(135deg, ' + cfg.bgColor1 + ' 0%, ' + cfg.bgColor2 + ' 100%)';
+  }
+  if (cfg.bgType === 'image' && bgImageUrl) {
+    return '#0a0a0a url("' + bgImageUrl + '") center/cover no-repeat';
+  }
+  return cfg.bgType === 'image' ? '#0a0a0a' : (cfg.bgColor1 || '#0a0a0a');
+}
+function clearTyping(){
+  typeTimers.forEach(t => clearTimeout(t));
+  typeTimers = [];
+}
+function typeInto(el, text, speed, done, animate){
+  const str = text || '';
+  el.textContent = animate ? '' : str;
+  if (!animate) { if (done) done(); return; }
+  let i = 0;
+  const step = () => {
+    if (i >= str.length) { if (done) done(); return; }
+    el.textContent = str.slice(0, ++i);
+    typeTimers.push(setTimeout(step, speed));
+  };
+  typeTimers.push(setTimeout(step, 60));
+}
+function renderParticles(){
+  const wrap = $('#bParticles');
+  wrap.innerHTML = '';
+  if (cfg.animStyle !== 'particles') return;
+  for (let i = 0; i < 36; i++) {
+    const s = document.createElement('i');
+    s.style.left = (Math.random() * 100).toFixed(1) + '%';
+    s.style.top = (Math.random() * 100).toFixed(1) + '%';
+    s.style.animationDelay = (Math.random() * 2.4).toFixed(2) + 's';
+    s.style.animationDuration = (2 + Math.random() * 2.6).toFixed(2) + 's';
+    s.style.opacity = (0.15 + Math.random() * 0.55).toFixed(2);
+    wrap.appendChild(s);
+  }
+}
+
+/* 计算强度档位：剩余越少，档位越高 */
+function levelFor(ratio){
+  if (ratio < 0.34) return 1;
+  if (ratio < 0.70) return 2;
+  return 3;
+}
+const LEVEL_FLASH = [1.6, 2.2, 2.8];        // Hz，均 ≤ 3
+const LEVEL_MULT  = [1, 1.33, 1.66];        // 时长倍率
+const LEVEL_VIB   = [[260, 120, 260], [320, 90, 320, 90, 420], [400, 80, 400, 80, 400, 80, 600]];
+
+/* 闪烁：用定时器硬切颜色，不依赖 CSS animation，
+   这样在省电模式、减少动效、以及各种浏览器上行为一致 */
+function startFlash(hz){
+  stopFlash();
+  if (!(hz > 0)) return;
+  const half = Math.max(60, Math.round(1000 / (hz * 2)));
+  flashTimer = setInterval(() => {
+    alertA.classList.toggle('flash-on');
+  }, half);
+}
+function stopFlash(){
+  if (flashTimer) { clearInterval(flashTimer); flashTimer = null; }
+  alertA.classList.remove('flash-on');
+}
+
+function fireNode(item, lateMs){
+  if (alertActive) return;
+  alertActive = true;
+
+  const e = elapsedMs();
+  const p = plan();
+  const spanMs = Math.max(1, p.totalMin) * 60000;
+  const ratio = clamp(e / spanMs, 0, 1);
+  const level = levelFor(ratio);
+
+  const base = clamp(Number(cfg.alertBaseSeconds) || 3, 0.5, 12);
+  const durMs = base * 1000 * LEVEL_MULT[level - 1];
+
+  /* 组装 A 层 */
+  alertB.classList.remove('on');
+  alertA.className = 'layer level-' + level + (cfg.reduceFlash ? ' no-flash' : '');
+  const prof = profileFor(item);
+  alertALabel.innerHTML = labelHtml(item, prof.label);
+  lateBadge.classList.toggle('hidden', !(lateMs > 15000));
+  const n0 = new Date();
+  alertAHM.textContent = fmtHM(n0);
+  alertASec.textContent = ':' + pad2(n0.getSeconds());
+
+  void alertA.offsetWidth;          // 强制重排，确保进场动画从头播放
+  alertA.classList.add('on');
+  document.body.classList.add('controls-hidden');
+  startFlash(cfg.reduceFlash ? 0 : LEVEL_FLASH[level - 1]);
+
+  /* 听觉 + 触觉 */
+  playBuiltin(prof.sound, level);
+  if (!audioUnlocked) showAudioLock();
+  if (cfg.vibrate && typeof navigator.vibrate === 'function') {
+    try { navigator.vibrate(LEVEL_VIB[level - 1]); } catch (err) {}
+  }
+
+  /* 到点切 B 层 */
+  clearTimeout(alertTimer);
+  alertTimer = setTimeout(() => showStageB(item, level), durMs);
+}
+
+function showStageB(item, level){
+  stopFlash();
+  alertA.classList.remove('on');
+
+  const prof = profileFor(item);
+  alertB.className = 'layer on style-' + (cfg.animStyle || 'typewriter');
+  alertB.style.background = bgCss();
+
+  const tEl = $('#bTitle'), sEl = $('#bSub'), fEl = $('#bFoot');
+  tEl.textContent = '';
+  sEl.textContent = '';
+  fEl.textContent = '';
+  $('#btnContinue').classList.add('hidden');
+
+  clearTyping();
+  renderParticles();
+
+  const animate = cfg.animStyle === 'typewriter';
+  typeInto(tEl, prof.title, 52, () => {
+    typeInto(sEl, prof.subtitle, 26, () => {
+      typeInto(fEl, prof.footer, 30, null, animate);
+    }, animate);
+  }, animate);
+
+  setTimeout(() => $('#btnContinue').classList.remove('hidden'), 650);
+
+  currentSrc = null;
+  setTimeout(() => {
+    playVoice(prof.voiceKeys).then(src => { currentSrc = src; }).catch(() => {});
+  }, 380);
+
+  /* 自动消失：0 表示只等手动点「继续」 */
+  clearTimeout(autoCloseTimer);
+  const bar = $('#bTimerBar');
+  if (prof.autoClose > 0) {
+    const secs = clamp(prof.autoClose, 1, 600);
+    bar.classList.remove('hidden');
+    bar.style.transition = 'none';
+    bar.style.width = '100%';
+    void bar.offsetWidth;
+    bar.style.transition = 'width ' + secs + 's linear';
+    bar.style.width = '0%';
+    autoCloseTimer = setTimeout(() => {
+      if (alertB.classList.contains('on')) closeStageB();
+    }, secs * 1000);
+  } else {
+    bar.classList.add('hidden');
+  }
+}
+
+function closeStageB(){
+  stopFlash();
+  clearTyping();
+  clearTimeout(alertTimer);
+  clearTimeout(autoCloseTimer);
+  autoCloseTimer = null;
+  $('#bTimerBar').classList.add('hidden');
+  alertTimer = null;
+  if (currentSrc) { try { currentSrc.stop(); } catch (e) {} currentSrc = null; }
+  alertA.classList.remove('on');
+  alertB.classList.remove('on');
+  alertActive = false;
+  revealControls();
+  tick();
+}
+
+/* =========================================================
+   8. 设置面板
+   ========================================================= */
+function fillForm(){
+  $$('#settings [data-key]').forEach(el => {
+    const k = el.dataset.key;
+    if (k === 'segmentsText') { el.value = activeGroup().segmentsText; return; }
+    if (!(k in cfg)) return;
+    if (el.type === 'checkbox') el.checked = !!cfg[k];
+    else el.value = cfg[k];
+  });
+  syncBgRows();
+  renderGroupChips(true);
+  updateSegSummary();
+  renderSegList();
+  syncAssetNames();
+}
+function onSettingInput(ev){
+  const el = ev.target;
+  const k = el.dataset.key;
+  if (!k) return;
+
+  /* 分段属于「当前组」，不放在 cfg 顶层 */
+  if (k === 'segmentsText') {
+    const g = activeGroup();
+    g.segmentsText = el.value;
+    const parsed = parseSegments(el.value);
+    if (parsed.length) {
+      const changed = parsed.length !== g.segments.length || parsed.join(',') !== g.segments.join(',');
+      g.segments = parsed;
+      if (changed) { normalizeGroup(g); fired.clear(); }
+    }
+    saveCfg();
+    updateSegSummary();
+    renderTicks();
+    renderSegList();
+    tick();
+    return;
+  }
+
+  if (!(k in cfg)) return;
+  let v;
+  if (el.type === 'checkbox') v = el.checked;
+  else if (el.type === 'number' || el.type === 'range') {
+    v = Number(el.value);
+    if (!isFinite(v)) return;
+    if (el.type === 'number') v = clamp(v, Number(el.min) || 0, Number(el.max) || 100000);
+  } else {
+    v = el.value;
+  }
+  cfg[k] = v;
+  if (k === 'repeat') { fired.clear(); }
+  saveCfg();
+  if (k === 'bgType') syncBgRows();
+  if (k === 'repeat') { updateSegSummary(); renderTicks(); tick(); }
+}
+/* ---------- 组切换 ---------- */
+/* ---------- 倒数日 ---------- */
+function countdownText(){
+  const at = String(cfg.countdownAt || '').trim();
+  if (!at) return '';
+  const target = new Date(at).getTime();
+  if (!isFinite(target)) return '';
+  const name = String(cfg.countdownName || '').trim() || '目标';
+  const diff = target - Date.now();
+  const abs = Math.abs(diff);
+  const days = Math.floor(abs / 86400000);
+  const hh = Math.floor((abs % 86400000) / 3600000);
+  const mm = Math.floor((abs % 3600000) / 60000);
+  let span = '';
+  if (days > 0) span += days + '天';
+  if (days > 0 || hh > 0) span += hh + '小时';
+  span += mm + '分钟';
+  return diff >= 0 ? ('距 ' + name + ' ' + span) : (name + ' 已过 ' + span);
+}
+
+function resetSession(){
+  stopFlash();
+  alertActive = false;
+  clearTimeout(alertTimer);
+  clearTimeout(autoCloseTimer);
+  alertTimer = null;
+  autoCloseTimer = null;
+  alertA.classList.remove('on');
+  alertB.classList.remove('on');
+  $('#bTimerBar').classList.add('hidden');
+  state = 'idle';
+  accMs = 0;
+  runStart = 0;
+  fired.clear();
+  document.body.classList.remove('controls-hidden');
+  renderControls();
+}
+function renderGroupChips(syncName){
+  const wrap = $('#groupChips');
+  if (!wrap) return;
+  const cur = activeGroup().id;
+  let html = '';
+  cfg.groups.forEach(g => {
+    const sum = (g.segments || []).reduce((a, b) => a + b, 0);
+    html += '<button type="button" class="gchip' + (g.id === cur ? ' active' : '') +
+      '" data-gid="' + g.id + '">' + escapeHtml(g.name) + ' · ' + sum + '′</button>';
+  });
+  wrap.innerHTML = html;
+  if (syncName) {
+    const inp = $('#groupNameInput');
+    if (inp) inp.value = activeGroup().name;
+  }
+}
+function switchGroup(id){
+  if (!id || id === cfg.activeGroupId) return;
+  if (state !== 'idle' && !window.confirm('切换组会重置当前计时，继续吗？')) return;
+  cfg.activeGroupId = id;
+  normalizeGroup(activeGroup());
+  saveCfg();
+  resetSession();
+  fillForm();
+  renderTicks();
+  tick();
+}
+function addGroup(){
+  if (state !== 'idle' && !window.confirm('新建组会重置当前计时，继续吗？')) return;
+  const src = activeGroup();
+  const g = makeGroup('新组 ' + (cfg.groups.length + 1), src.segments.slice());
+  cfg.groups.push(g);
+  cfg.activeGroupId = g.id;
+  saveCfg();
+  resetSession();
+  fillForm();
+  renderTicks();
+  tick();
+  toast('已新建「' + g.name + '」，在上面改个名字');
+}
+function delGroup(){
+  if (cfg.groups.length <= 1) { toast('至少保留一组'); return; }
+  const g = activeGroup();
+  if (!window.confirm('删除「' + g.name + '」这一组？分段和它的自定义都会一起没掉。')) return;
+  cfg.groups = cfg.groups.filter(x => x.id !== g.id);
+  cfg.activeGroupId = cfg.groups[0].id;
+  saveCfg();
+  resetSession();
+  fillForm();
+  renderTicks();
+  tick();
+  toast('已删除');
+}
+
+/* 分段配置的即时回显 */
+function updateSegSummary(){
+  const p = plan();
+  const el = $('#segSummary');
+  if (!el) return;
+  const g = activeGroup();
+  const sum = p.segs.reduce((a, b) => a + b, 0);
+  const head = '「' + g.name + '」一组 ' + sum + ' 分钟（' + p.segs.join(' + ') + '）';
+  el.textContent = p.groups > 1
+    ? head + ' × ' + p.groups + ' 次 = 共 ' + p.totalMin + ' 分钟，报时 ' + p.list.length + ' 次'
+    : head + '，共 ' + p.list.length + ' 段，报时 ' + p.list.length + ' 次';
+}
+function syncBgRows(){
+  const t = cfg.bgType;
+  $('#bgColor1Row').classList.toggle('hidden', t === 'image');
+  $('#bgColor2Row').classList.toggle('hidden', t !== 'gradient');
+  $('#bgImageRow').classList.toggle('hidden', t !== 'image');
+}
+
+/* ---------- 分段报时 / 整组结束 编辑列表 ---------- */
+/* scope: 'seg:0' | 'seg:1' ... 或 'end' */
+function voiceKeyOf(scope){
+  const gid = activeGroup().id;
+  return scope === 'end'
+    ? ('voice:' + gid + ':end')
+    : ('voice:' + gid + ':' + Number(String(scope).split(':')[1]));
+}
+function metaFieldsHtml(scope, m){
+  const v = x => escapeHtml(x == null ? '' : String(x));
+  const opt = (val, label) => '<option value="' + val + '"' + (m.sound === val ? ' selected' : '') + '>' + label + '</option>';
+  const S = ' data-meta="' + scope + '"';
+  const ph = scope === 'end' ? '留空 = 用最后一段 / 全局' : '留空 = 用全局';
+  return ''
+    + '<div class="row col"><span>报时文案</span>'
+    +   '<input type="text"' + S + ' data-field="label" value="' + v(m.label) + '" placeholder="留空 = 已过 {n} 分钟">'
+    + '</div>'
+    + '<div class="row"><span>音效</span>'
+    +   '<select' + S + ' data-field="sound">'
+    +     '<option value=""' + (m.sound ? '' : ' selected') + '>跟随上一段</option>'
+    +     opt('bell', '铃音') + opt('chime', '钟声') + opt('beep', '电子') + opt('none', '静音')
+    +   '</select>'
+    + '</div>'
+    + '<div class="row col"><span>主标题</span>'
+    +   '<textarea' + S + ' data-field="title" placeholder="' + ph + '主标题">' + v(m.title) + '</textarea>'
+    + '</div>'
+    + '<div class="row col"><span>副标题</span>'
+    +   '<textarea' + S + ' data-field="subtitle" placeholder="' + ph + '副标题">' + v(m.subtitle) + '</textarea>'
+    + '</div>'
+    + '<div class="row col"><span>落款</span>'
+    +   '<input type="text"' + S + ' data-field="footer" value="' + v(m.footer) + '" placeholder="' + ph + '落款">'
+    + '</div>'
+    + '<div class="row col"><span>语音</span>'
+    +   '<div class="fileline">'
+    +     '<span class="name" data-vname="' + scope + '">未上传</span>'
+    +     '<input type="file" accept="audio/*" data-vfile="' + scope + '">'
+    +     '<button type="button" class="btn small" data-vplay="' + scope + '">试听</button>'
+    +     '<button type="button" class="btn small danger" data-vdel="' + scope + '">删除</button>'
+    +   '</div>'
+    + '</div>'
+    + '<div class="row"><span>自动消失（秒）</span>'
+    +   '<input type="number" min="0" max="600" step="1"' + S + ' data-field="autoClose" value="' + v(m.autoClose) + '" placeholder="跟随上一段">'
+    + '</div>';
+}
+function renderSegList(){
+  const wrap = $('#segList');
+  if (!wrap) return;
+  normalizeSegMeta();
+  const wasOpen = {};
+  $$('#segList .segitem').forEach(el => { if (el.classList.contains('open')) wasOpen[el.dataset.i] = 1; });
+
+  let html = '';
+  activeGroup().segments.forEach((len, i) => {
+    const m = segMetaAt(i);
+    const open = wasOpen[String(i)];
+    html += '<div class="segitem' + (open ? ' open' : '') + '" data-i="' + i + '">'
+      + '<button type="button" class="seghead">'
+      +   '<span class="idx">第 ' + (i + 1) + ' 段</span>'
+      +   '<span class="len">' + len + ' 分钟</span>'
+      +   '<span class="spacer"></span>'
+      +   '<span class="badge' + (segHasCustom(m) ? '' : ' hidden') + '">已自定义</span>'
+      +   '<span class="chev">›</span>'
+      + '</button>'
+      + '<div class="segbody">' + metaFieldsHtml('seg:' + i, m) + '</div>'
+      + '</div>';
+  });
+  wrap.innerHTML = html;
+  renderEndBody();
+  syncVoiceNames();
+}
+/* 整组结束那一套 */
+function endMeta(){
+  return activeGroup().endMeta;
+}
+function renderEndBody(){
+  const body = $('#endBody');
+  if (!body) return;
+  const m = endMeta();
+  body.innerHTML = metaFieldsHtml('end', m);
+  const badge = $('#endBadge');
+  if (badge) badge.classList.toggle('hidden', !segHasCustom(m));
+}
+async function syncVoiceNames(){
+  const scopes = activeGroup().segments.map((_, i) => 'seg:' + i).concat(['end']);
+  for (let k = 0; k < scopes.length; k++) {
+    const scope = scopes[k];
+    const el = $('[data-vname="' + scope + '"]');
+    if (!el) continue;
+    const rec = await idbGet(voiceKeyOf(scope));
+    el.textContent = rec && rec.name ? rec.name : '未上传';
+  }
+}
+function onMetaField(ev){
+  const el = ev.target;
+
+  /* 语音上传 */
+  if (el.type === 'file' && el.dataset.vfile) {
+    if (ev.type !== 'change') return;
+    const scope = el.dataset.vfile;
+    const f = el.files && el.files[0];
+    if (!f) return;
+    idbSet(voiceKeyOf(scope), { name: f.name, blob: f }).then(() => {
+      toast((scope === 'end' ? '整组结束的' : '第 ' + (Number(scope.split(':')[1]) + 1) + ' 段的') + '语音已保存');
+      syncVoiceNames();
+      el.value = '';
+    }).catch(() => toast('语音保存失败：浏览器不允许本地存储'));
+    return;
+  }
+
+  const scope = el.dataset.meta;
+  const field = el.dataset.field;
+  if (!scope || !field) return;
+
+  const m = scope === 'end' ? endMeta() : segMetaAt(Number(scope.split(':')[1]));
+  let v = el.value;
+  if (field === 'autoClose') v = (v === '' ? '' : clamp(Number(v) || 0, 0, 600));
+  m[field] = v;
+  saveCfg();
+
+  const item = el.closest('.segitem');
+  const badge = item && item.querySelector('.badge');
+  if (badge) badge.classList.toggle('hidden', !(scope === 'end' ? segHasCustom(endMeta()) : segHasCustom(m)));
+}
+
+async function syncAssetNames(){
+  const v = await idbGet('voice');
+  $('#voiceName').textContent = v && v.name ? v.name : '未上传';
+  const b = await idbGet('bgimage');
+  $('#bgName').textContent = b && b.name ? b.name : '未选择';
+}
+async function refreshBgImage(){
+  const rec = await idbGet('bgimage');
+  if (bgImageUrl) { URL.revokeObjectURL(bgImageUrl); bgImageUrl = null; }
+  if (rec && rec.blob) bgImageUrl = URL.createObjectURL(rec.blob);
+}
+
+/* =========================================================
+   9. 事件绑定
+   ========================================================= */
+function bindEvents(){
+  /* --- 主控制 --- */
+  $('#btnPrimary').addEventListener('click', () => {
+    audioCtx();                       // 借用户手势解锁音频
+    if (state === 'idle') {
+      /* 先起表，再申请全屏/方向锁定：沉浸式请求即使卡住或失败，也不耽误计时 */
+      accMs = 0;
+      runStart = Date.now();
+      setState('running');
+      enterImmersive();
+      requestWakeLock();
+    } else if (state === 'running') {
+      accMs = elapsedMs();
+      setState('paused');
+    } else {
+      runStart = Date.now();
+      setState('running');
+      requestWakeLock();
+    }
+    saveRun(true);
+    tick();
+    revealControls();
+  });
+
+  $('#btnFar').addEventListener('click', () => {
+    setFarMode(!document.body.classList.contains('far-view'));
+  });
+
+  $('#btnReset').addEventListener('click', () => {
+    if (state === 'idle' && accMs === 0 && fired.size === 0) { toast('已经是初始状态'); return; }
+    if (!window.confirm('确定重置？已过时长和报时节点都会清零。')) return;
+    state = 'idle';
+    accMs = 0;
+    runStart = 0;
+    fired.clear();
+    saveRun(true);
+    renderControls();
+    document.body.classList.remove('controls-hidden');
+    tick();
+  });
+
+  $('#btnSettings').addEventListener('click', () => {
+    fillForm();
+    $('#settings').classList.add('on');
+    document.body.classList.remove('controls-hidden');
+  });
+  $('#btnCloseSettings').addEventListener('click', () => {
+    $('#settings').classList.remove('on');
+    revealControls();
+  });
+
+  /* 点击任意处唤起控制条 */
+  document.addEventListener('pointerdown', tryUnlockAudio, { passive: true });
+
+  document.addEventListener('pointerdown', ev => {
+    if (alertActive) return;
+    if ($('#settings').classList.contains('on')) return;
+    if (!$('#alertB').classList.contains('on')) revealControls();
+  }, { passive: true });
+
+  /* --- 报时 B 关闭 --- */
+  $('#btnContinue').addEventListener('click', closeStageB);
+
+  /* --- 设置项 --- */
+  const sheet = $('#settings');
+  sheet.addEventListener('input', onSettingInput);
+  sheet.addEventListener('change', onSettingInput);
+
+  $('#groupChips').addEventListener('click', ev => {
+    const b = ev.target.closest('[data-gid]');
+    if (b) switchGroup(b.dataset.gid);
+  });
+  $('#btnAddGroup').addEventListener('click', addGroup);
+  $('#btnDelGroup').addEventListener('click', delGroup);
+  $('#groupNameInput').addEventListener('input', ev => {
+    const g = activeGroup();
+    g.name = ev.target.value.slice(0, 16) || '未命名';
+    saveCfg();
+    renderGroupChips(false);
+    lastGroupLabel = null;
+    tick();
+  });
+
+  const segList = $('#segList');
+  segList.addEventListener('input', onMetaField);
+  segList.addEventListener('change', onMetaField);
+  segList.addEventListener('click', ev => {
+    const head = ev.target.closest('.seghead');
+    if (head) { head.parentElement.classList.toggle('open'); return; }
+    const play = ev.target.closest('[data-vplay]');
+    if (play) {
+      audioCtx();
+      const scope = play.dataset.vplay;
+      playVoice(voiceKeyOf(scope)).then(src => {
+        if (!src) toast('第 ' + (Number(scope.split(':')[1]) + 1) + ' 段还没有上传语音');
+      }).catch(() => {});
+      return;
+    }
+    const del = ev.target.closest('[data-vdel]');
+    if (del) {
+      idbDel(voiceKeyOf(del.dataset.vdel)).then(() => { toast('已删除'); syncVoiceNames(); });
+    }
+  });
+
+  /* 整组结束那一块 */
+  const endItem = $('#endItem');
+  endItem.addEventListener('input', onMetaField);
+  endItem.addEventListener('change', onMetaField);
+  endItem.addEventListener('click', ev => {
+    const head = ev.target.closest('.seghead');
+    if (head) { head.closest('.segitem').classList.toggle('open'); return; }
+    const play = ev.target.closest('[data-vplay]');
+    if (play) {
+      audioCtx();
+      playVoice(voiceKeyOf(play.dataset.vplay))
+        .then(src => { if (!src) toast('整组结束还没有单独的语音'); }).catch(() => {});
+      return;
+    }
+    const del = ev.target.closest('[data-vdel]');
+    if (del) {
+      idbDel(voiceKeyOf(del.dataset.vdel)).then(() => { toast('已删除'); syncVoiceNames(); });
+    }
+  });
+
+  $('#btnTestSound').addEventListener('click', () => {
+    playBuiltin(cfg.beepSound, 2);
+  });
+  $('#btnPreview').addEventListener('click', () => {
+    $('#settings').classList.remove('on');
+    audioCtx();
+    if (alertActive) { toast('正在演示中，先把它关掉再试'); return; }
+    const p = plan();
+    if (!p.list.length) { toast('请先设置分段'); return; }
+    const item = p.list[p.list.length - 1];
+    try {
+      fireNode({ at: item.at, len: item.len, seg: item.seg, total: item.total,
+                 group: item.group, groups: item.groups }, 0);
+    } catch (e) {
+      alertActive = false;
+      toast('演示启动失败：' + (e && e.message ? e.message : e));
+      return;
+    }
+    if (!alertA.classList.contains('on')) {
+      alertActive = false;
+      toast('演示没能启动，刷新页面再试');
+    }
+  });
+
+  $('#voiceFile').addEventListener('change', async ev => {
+    const f = ev.target.files && ev.target.files[0];
+    if (!f) return;
+    try {
+      await idbSet('voice', { name: f.name, blob: f });
+    } catch (e) {
+      toast('语音保存失败：浏览器不允许本地存储');
+      return;
+    }
+    voiceBuf = null;
+    voiceBufTag = null;
+    toast('语音已保存');
+    syncAssetNames();
+    ev.target.value = '';
+  });
+  $('#btnPlayVoice').addEventListener('click', async () => {
+    audioCtx();
+    const src = await playVoice();
+    if (!src) toast('还没有上传语音');
+  });
+  $('#btnDelVoice').addEventListener('click', async () => {
+    await idbDel('voice');
+    voiceBuf = null;
+    voiceBufTag = null;
+    toast('语音已删除');
+    syncAssetNames();
+  });
+
+  $('#bgFile').addEventListener('change', async ev => {
+    const f = ev.target.files && ev.target.files[0];
+    if (!f) return;
+    try {
+      await idbSet('bgimage', { name: f.name, blob: f });
+    } catch (e) {
+      toast('图片保存失败：浏览器不允许本地存储');
+      return;
+    }
+    await refreshBgImage();
+    cfg.bgType = 'image';
+    saveCfg();
+    fillForm();
+    toast('背景图已保存');
+    ev.target.value = '';
+  });
+  $('#btnClearBg').addEventListener('click', async () => {
+    await idbDel('bgimage');
+    if (bgImageUrl) { URL.revokeObjectURL(bgImageUrl); bgImageUrl = null; }
+    toast('背景图已清除');
+    syncAssetNames();
+  });
+
+  $('#btnGenCode').addEventListener('click', genCode);
+  $('#btnCopyCode').addEventListener('click', copyCode);
+  $('#btnApplyCode').addEventListener('click', applyCode);
+  $('#btnExportHtml').addEventListener('click', () => {
+    exportHtml().catch(e => toast('导出失败：' + (e && e.message ? e.message : e)));
+  });
+
+  $('#btnResetAll').addEventListener('click', async () => {
+    if (!window.confirm('恢复默认设置？自定义文字、音效、背景图和语音都会被清除。')) return;
+    cfg = JSON.parse(JSON.stringify(DEFAULTS));
+    try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+    saveCfg();
+    await idbDel('voice');
+    await idbDel('bgimage');
+    for (let i = 0; i < 24; i++) await idbDel('voice:' + i);
+    await idbDel('voice:end');
+    voiceBuf = null;
+    voiceBufTag = null;
+    if (bgImageUrl) { URL.revokeObjectURL(bgImageUrl); bgImageUrl = null; }
+    fired.clear();
+    fillForm();
+    renderTicks();
+    toast('已恢复默认');
+  });
+
+  $('#rotateDismiss').addEventListener('click', () => {
+    $('#rotateHint').classList.add('dismissed');
+  });
+
+  /* --- 键盘（方便桌面调试） --- */
+  document.addEventListener('keydown', ev => {
+    if (ev.key === 'Escape') {
+      if (alertB.classList.contains('on')) { closeStageB(); return; }
+      if (alertA.classList.contains('on')) { return; }
+      if ($('#settings').classList.contains('on')) { $('#settings').classList.remove('on'); revealControls(); }
+    }
+    if ((ev.key === 'f' || ev.key === 'F') && !$('#settings').classList.contains('on') && !alertActive) {
+      setFarMode(!document.body.classList.contains('far-view'));
+      return;
+    }
+    if (ev.code === 'Space' && !$('#settings').classList.contains('on') && !alertActive) {
+      ev.preventDefault();
+      $('#btnPrimary').click();
+    }
+  });
+
+  /* --- 禁止缩放、长按菜单 --- */
+  document.addEventListener('gesturestart', ev => ev.preventDefault());
+  document.addEventListener('contextmenu', ev => ev.preventDefault());
+  document.addEventListener('dblclick', ev => ev.preventDefault(), { passive: false });
+
+  /* --- 回到前台：校准 + 补发提醒 --- */
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      requestWakeLock();
+      if (ac && ac.state !== 'running') { try { ac.resume(); } catch (e) {} }
+      tick();
+    } else {
+      saveRun(true);
+    }
+  });
+  window.addEventListener('pagehide', () => saveRun(true));
+  window.addEventListener('beforeunload', () => saveRun(true));
+}
+
+/* =========================================================
+   9.5 导出 / 导入（搬到手机）
+   ========================================================= */
+const PRESET_KEY = 'pressure-clock:preset-applied';
+
+function b64encode(str){
+  const bytes = new TextEncoder().encode(str);
+  let bin = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) {
+    bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  }
+  return btoa(bin);
+}
+function b64decode(b64){
+  const bin = atob(String(b64).replace(/\s+/g, ''));
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return new TextDecoder().decode(bytes);
+}
+function blobToDataURL(blob){
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result);
+    r.onerror = () => reject(r.error);
+    r.readAsDataURL(blob);
+  });
+}
+function downloadFile(name, text){
+  const blob = new Blob([text], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+}
+
+/* 把当前所有设置打包（含语音/背景图） */
+async function buildPreset(){
+  const preset = {
+    id: 'p' + Date.now().toString(36),
+    config: JSON.parse(JSON.stringify(cfg)),
+    assets: {}
+  };
+  const keys = ['voice', 'bgimage'];
+  const g = activeGroup();
+  for (let i = 0; i < g.segments.length; i++) keys.push('voice:' + g.id + ':' + i);
+  keys.push('voice:' + g.id + ':end');
+  let total = 0;
+  for (let k = 0; k < keys.length; k++) {
+    const rec = await idbGet(keys[k]);
+    if (!rec || !rec.blob) continue;
+    if (total + rec.blob.size > 8 * 1024 * 1024) continue;   // 超过 8MB 就不打包，避免文件过大
+    try {
+      preset.assets[keys[k]] = { name: rec.name || 'asset', data: await blobToDataURL(rec.blob) };
+      total += rec.blob.size;
+    } catch (e) {}
+  }
+  return preset;
+}
+
+/* 取当前页面源码：http 下直接读原文件，file:// 下退回序列化 DOM */
+async function sourceHtml(){
+  try {
+    const r = await fetch(location.href, { cache: 'no-store' });
+    if (r && r.ok) {
+      const t = await r.text();
+      if (t && t.indexOf('<html') >= 0 && t.indexOf('</body>') >= 0) return t;
+    }
+  } catch (e) { /* file:// 会失败，走下面的兜底 */ }
+  /* 兜底：先把运行时状态复位，免得导出的文件一打开就是弹层 */
+  try {
+    alertA.className = 'layer';
+    alertB.className = 'layer';
+    alertB.removeAttribute('style');
+    $('#settings').classList.remove('on');
+    document.body.classList.remove('controls-hidden');
+    $('#segList').innerHTML = '';
+    $('#groupChips').innerHTML = '';
+    $('#endBody').innerHTML = '';
+    $('#ticks').innerHTML = '';
+    $('#bParticles').innerHTML = '';
+    $('#bTimerBar').className = 'hidden';
+    $('#bTimerBar').removeAttribute('style');
+    $('#toast').className = '';
+    $('#toast').textContent = '';
+    $('#codeBox').value = '';
+  } catch (e) {}
+  return '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+}
+
+async function exportHtml(){
+  toast('正在打包，稍等…');
+  const preset = await buildPreset();
+  const json = JSON.stringify(preset).replace(/</g, '\\u003c');
+  const tag = '<script id="presetData">window.__PRESET__=' + json + ';</scr' + 'ipt>';
+  let html = await sourceHtml();
+  const marker = '<script>\n(function(){';
+  const idx = html.indexOf(marker);
+  if (idx >= 0) {
+    /* 只删「紧贴主脚本前面」的旧预设，不能用全局正则：
+       主脚本源码里本身就有这段字符串，全局替换会把代码一起吃掉 */
+    const before = html.slice(0, idx).replace(/(<script id="presetData">[\s\S]*?<\/script>\s*)$/, '');
+    html = before + tag + '\n' + html.slice(idx);
+  } else {
+    /* 注意：源码里本身就有 '</body>' 这个字符串，必须插在最后一个之前 */
+    const at = html.lastIndexOf('</body>');
+    html = at >= 0 ? (html.slice(0, at) + tag + '\n' + html.slice(at)) : (html + tag);
+  }
+  const name = '施压时钟-' + (activeGroup().name || '预设') + '.html';
+  downloadFile(name, html);
+  const n = Object.keys(preset.assets).length;
+  toast(n ? ('已导出，含 ' + n + ' 个音频/图片') : '已导出');
+}
+
+/* 配置码：纯文字，跨设备粘贴用 */
+function genCode(){
+  const box = $('#codeBox');
+  try {
+    box.value = b64encode(JSON.stringify(cfg));
+    box.select();
+    toast('配置码已生成，点「复制」带走');
+  } catch (e) {
+    toast('生成失败：' + (e.message || e));
+  }
+}
+async function copyCode(){
+  const box = $('#codeBox');
+  if (!box.value) { toast('先点「生成配置码」'); return; }
+  try {
+    await navigator.clipboard.writeText(box.value);
+    toast('已复制，去手机粘贴');
+    return;
+  } catch (e) {}
+  /* 剪贴板不可用时退化为选中，手动复制 */
+  box.focus();
+  box.select();
+  try { document.execCommand('copy'); toast('已复制'); }
+  catch (e2) { toast('请手动长按复制选中的文字'); }
+}
+function applyCode(){
+  const box = $('#codeBox');
+  const raw = box.value.trim();
+  if (!raw) { toast('先粘贴配置码'); return; }
+  let obj;
+  try {
+    obj = JSON.parse(b64decode(raw));
+  } catch (e) {
+    try { obj = JSON.parse(raw); }
+    catch (e2) { toast('配置码看不懂，检查是否复制完整'); return; }
+  }
+  if (!obj || typeof obj !== 'object') { toast('配置码无效'); return; }
+  const merged = JSON.parse(JSON.stringify(DEFAULTS));
+  Object.keys(merged).forEach(k => { if (obj[k] !== undefined) merged[k] = obj[k]; });
+  cfg = merged;
+  try {
+    cfg.groups.forEach(g => normalizeGroup(g));
+    if (!cfg.groups || !cfg.groups.length) { cfg.groups = DEFAULTS.groups; cfg.activeGroupId = DEFAULTS.activeGroupId; }
+    if (!cfg.groups.some(g => g.id === cfg.activeGroupId)) cfg.activeGroupId = cfg.groups[0].id;
+  } catch (e) {}
+  saveCfg();
+  resetSession();
+  fillForm();
+  renderTicks();
+  tick();
+  toast('配置已应用');
+}
+
+/* 页面启动时如果带着预设，就把预设装进去（只装一次） */
+function takePreset(){
+  try {
+    const p = window.__PRESET__;
+    if (!p || !p.config) return null;
+    if (localStorage.getItem(PRESET_KEY) === p.id) return null;
+    /* 这个地址已经有配置了，就不要用文件里的预设覆盖用户改过的东西 */
+    let hasCfg = false;
+    try { hasCfg = !!localStorage.getItem(STORAGE_KEY); } catch (e) {}
+    if (hasCfg) {
+      try { localStorage.setItem(PRESET_KEY, p.id); } catch (e) {}
+      return null;
+    }
+    const merged = JSON.parse(JSON.stringify(DEFAULTS));
+    Object.keys(merged).forEach(k => { if (p.config[k] !== undefined) merged[k] = p.config[k]; });
+    cfg = merged;
+    try {
+      cfg.groups.forEach(g => normalizeGroup(g));
+      if (!cfg.groups || !cfg.groups.length) { cfg.groups = DEFAULTS.groups; cfg.activeGroupId = DEFAULTS.activeGroupId; }
+      if (!cfg.groups.some(g => g.id === cfg.activeGroupId)) cfg.activeGroupId = cfg.groups[0].id;
+    } catch (e) {}
+    saveCfg();
+    try { localStorage.setItem(PRESET_KEY, p.id); } catch (e) {}
+    return p;
+  } catch (e) {
+    return null;
+  }
+}
+async function importPresetAssets(p){
+  const assets = p.assets || {};
+  const keys = Object.keys(assets);
+  for (let i = 0; i < keys.length; i++) {
+    try {
+      const r = await fetch(assets[keys[i]].data);
+      const blob = await r.blob();
+      await idbSet(keys[i], { name: assets[keys[i]].name || 'asset', blob: blob });
+    } catch (e) {}
+  }
+  voiceBuf = null;
+  voiceBufTag = null;
+  await refreshBgImage();
+  syncAssetNames();
+  syncVoiceNames();
+  if (keys.length) toast('语音/背景图已导入');
+}
+
+/* =========================================================
+   10. 沉浸式与常亮
+   ========================================================= */
+async function enterImmersive(){
+  try {
+    const el = document.documentElement;
+    if (!document.fullscreenElement && el.requestFullscreen) {
+      await el.requestFullscreen({ navigationUI: 'hide' });
+    }
+  } catch (e) { /* iOS Safari 等不支持，忽略 */ }
+  try {
+    if (screen.orientation && typeof screen.orientation.lock === 'function') {
+      await screen.orientation.lock('landscape');
+    }
+  } catch (e) { /* 不支持横屏锁定，忽略 */ }
+}
+let wakeLock = null;
+async function requestWakeLock(){
+  try {
+    if ('wakeLock' in navigator && !wakeLock) {
+      wakeLock = await navigator.wakeLock.request('screen');
+      wakeLock.addEventListener('release', () => { wakeLock = null; });
+    }
+  } catch (e) { /* 不支持或被拒绝，忽略 */ }
+}
+
+/* =========================================================
+   11. 启动
+   ========================================================= */
+function init(){
+  /* 如果这个文件是「导出的预设」，先把配置装进去（只装一次） */
+  const preset = takePreset();
+  takeConfigPatch();
+  takeResumeSeed();
+  const resumed = restoreRun();
+  applyViewMode();
+  /* 先绑事件、先渲染，保证即使本地存储不可用，界面也完全能用 */
+  fillForm();
+  renderTicks();
+  bindEvents();
+  renderControls();
+  tick();
+  setInterval(tick, 200);
+  /* 本地存储是增强项：失败只降级，不阻塞主流程 */
+  refreshBgImage().catch(() => {});
+  syncAssetNames().catch(() => {});
+  if (preset) importPresetAssets(preset).catch(() => {});
+  if (resumed) toast('已接上之前的计时');
+  /* 1.2 秒后音频还没解锁就提醒用户点一下屏幕 */
+  setTimeout(() => { if (!audioUnlocked) showAudioLock(); }, 1200);
+  /* HTTPS 下注册 Service Worker：离线可用 + 每次联网自动拿最新版 */
+  if ('serviceWorker' in navigator && location.protocol === 'https:') {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  }
+}
+init();
+
+})();
+</script>
+</body>
+</html>
