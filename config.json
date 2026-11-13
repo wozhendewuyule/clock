@@ -1,6 +1,6 @@
 {
- "version": 1794580973001,
- "updatedAt": "2026-11-13 22:42",
+ "version": 1794582102866,
+ "updatedAt": "2026/11/13 23:01:42",
  "config": {
   "groups": [
    {
@@ -94,8 +94,8 @@
     "endMeta": {
      "label": "",
      "sound": "",
-     "title": "速写结束",
-     "subtitle": "放下笔，退远看看",
+     "title": "考试结束",
+     "subtitle": "请各位考生有序离场",
      "footer": "-S'y",
      "autoClose": ""
     }
