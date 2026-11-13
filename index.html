@@ -3654,6 +3654,16 @@ function init(){
   takeConfigPatch();
   takeResumeSeed();
   const resumed = restoreRun();
+
+  /* 正式上线：把之前 Beta 默认关闭导致的 false 统一改回开启（只做一次） */
+  try {
+    if (!localStorage.getItem('pressure-clock:beta-live-v1')) {
+      cfg.pressurePack = true;
+      localStorage.setItem('pressure-clock:beta-live-v1', '1');
+      saveCfg();
+    }
+  } catch (e) {}
+
   applyCompareParams();
   applyViewMode();
   /* 先绑事件、先渲染，保证即使本地存储不可用，界面也完全能用 */
