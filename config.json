@@ -1,6 +1,6 @@
 {
- "version": 1794590574762,
- "updatedAt": "2026/11/14 01:22:54",
+ "version": 1794592819906,
+ "updatedAt": "2026-11-14 02:00",
  "config": {
   "groups": [
    {
@@ -72,8 +72,7 @@
       "title": "起型",
       "subtitle": "抓动态，别磨蹭",
       "footer": "-S'y",
-      "autoClose": "",
-      "voice": "voices/gmwesib3l15jl-0-1794590569136.m4a"
+      "autoClose": ""
      },
      {
       "label": "",
@@ -95,8 +94,8 @@
     "endMeta": {
      "label": "",
      "sound": "",
-     "title": "考试结束",
-     "subtitle": "请各位考生有序离场",
+     "title": "速写结束",
+     "subtitle": "放下笔，退远看看",
      "footer": "-S'y",
      "autoClose": ""
     }
@@ -178,12 +177,14 @@
   "bgColor1": "#1a0505",
   "bgColor2": "#5c0d0d",
   "animStyle": "typewriter",
-  "volume": 1,
+  "volume": 0.8,
   "showRemain": true,
   "autoCloseSeconds": 3,
   "viewMode": "normal",
   "countdownName": "联考",
   "countdownAt": "2026-11-28T08:30",
-  "endGentle": true
+  "endGentle": true,
+  "cloudVoice": false,
+  "endShowCountdown": true
  }
 }
