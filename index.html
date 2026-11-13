@@ -476,6 +476,22 @@ body.cmp-embed #audioLock{display:none !important;}
   65%,100%{transform:rotate(90deg);}
 }
 
+/* ---------- 设置分类 ---------- */
+.set-tabs{
+  position:sticky;top:0;z-index:20;
+  display:flex;gap:8px;padding:10px 0 12px;margin-bottom:4px;
+  background:linear-gradient(#f6f6f8 72%, rgba(246,246,248,0));
+}
+.set-tabs button{
+  flex:1;font-family:inherit;font-size:14px;padding:9px 0;border-radius:10px;
+  border:1px solid #e2e2e6;background:#fff;color:#6b6b74;
+}
+.set-tabs button.on{background:#111;color:#fff;border-color:#111;}
+#settings[data-cat="timer"] section:not([data-cat="timer"]){display:none;}
+#settings[data-cat="alert"] section:not([data-cat="alert"]){display:none;}
+#settings[data-cat="cloud"] section:not([data-cat="cloud"]){display:none;}
+#settings[data-cat="more"] section:not([data-cat="more"]){display:none;}
+
 /* ---------- 段内提示条（发令 / 预警） ---------- */
 #cue{
   position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 64px);
@@ -627,9 +643,16 @@ body.far-view #updateBar{bottom:calc(env(safe-area-inset-bottom,0px) + 80px);}
     <div class="sheet-title">设置</div>
     <button id="btnCloseSettings" class="btn small">完成</button>
   </div>
+  <div class="set-tabs" id="setTabs">
+    <button type="button" data-cat="timer" class="on">计时</button>
+    <button type="button" data-cat="alert">报时</button>
+    <button type="button" data-cat="cloud">云端</button>
+    <button type="button" data-cat="more">其他</button>
+  </div>
+
   <div class="sheet-body">
 
-    <section>
+    <section data-cat="timer">
       <h3>计时与分组</h3>
       <div class="row col">
         <span>组（每套方案一个组）</span>
@@ -664,7 +687,7 @@ body.far-view #updateBar{bottom:calc(env(safe-area-inset-bottom,0px) + 80px);}
       <p class="hint">强度随进度递增：一档 ×1.0，二档 ×1.33，三档 ×1.66。默认 3s → 4s → 5s。</p>
     </section>
 
-    <section>
+    <section data-cat="timer">
       <h3>分段报时（每段可单独设置）</h3>
       <div class="row"><span>按顺序演示全部</span>
         <button type="button" id="btnDemoAll" class="btn small">全部演示</button>
@@ -675,7 +698,7 @@ body.far-view #updateBar{bottom:calc(env(safe-area-inset-bottom,0px) + 80px);}
         <b>音效和自动消失留空 = 跟随上一段</b>；文字留空 = 用全局默认（不会串上一段的内容）。</p>
     </section>
 
-    <section>
+    <section data-cat="timer">
       <h3>整组结束（单独一套）</h3>
       <div class="seglist">
         <div class="segitem" id="endItem">
@@ -693,7 +716,7 @@ body.far-view #updateBar{bottom:calc(env(safe-area-inset-bottom,0px) + 80px);}
         这一下必定是最高强度档。</p>
     </section>
 
-    <section>
+    <section data-cat="alert">
       <h3>全局默认 · 报时冲击（阶段 A）</h3>
       <label class="row"><span>文案模板</span>
         <input type="text" data-key="alertTemplate" placeholder="已过 {n} 分钟">
@@ -711,10 +734,10 @@ body.far-view #updateBar{bottom:calc(env(safe-area-inset-bottom,0px) + 80px);}
       <div class="row"><span>试听</span>
         <button id="btnTestSound" class="btn small">播放一次</button>
       </div>
-      <div class="row"><span>Beta 压力包（总开关）</span>
+      <div class="row"><span>压力增强（总开关）</span>
         <input type="checkbox" data-key="pressurePack">
       </div>
-      <p class="hint">默认关闭。打开后启用：每段压力档位、段内预警、开场发令、倒数日冲刺。</p>
+      <p class="hint">默认开启。包含：每段压力档位、段内预警、开场发令、倒数日冲刺。不需要可以关掉。</p>
       <div class="row"><span>新旧对比</span>
         <button type="button" id="btnCompare" class="btn small">打开对比</button>
       </div>
@@ -759,7 +782,7 @@ body.far-view #updateBar{bottom:calc(env(safe-area-inset-bottom,0px) + 80px);}
       </div>
     </section>
 
-    <section>
+    <section data-cat="alert">
       <h3>全局默认 · 自定义画面（阶段 B）</h3>
       <div class="row"><span>自动消失（秒，0 = 只手动关闭）</span>
         <input type="number" min="0" max="120" step="1" data-key="autoCloseSeconds">
@@ -822,8 +845,16 @@ body.far-view #updateBar{bottom:calc(env(safe-area-inset-bottom,0px) + 80px);}
       </div>
     </section>
 
-    <section>
-      <h3>搬到手机上</h3>
+    <section data-cat="cloud">
+      <h3>云端 · 识别码 · 搬到手机上</h3>
+      <div class="row"><span>识别码（不同码 = 一整套配置）</span>
+        <input type="text" id="accessCodeInput" placeholder="留空 = 默认配置">
+      </div>
+      <div class="row"><span>应用识别码</span>
+        <button type="button" id="btnApplyCode" class="btn small">加载这一套</button>
+      </div>
+      <p class="hint">填写后立即从云端拉取这套配置，之后所有「更新」都只拉这一套。留空恢复默认配置。</p>
+
       <div class="row col">
         <span>配置码（不含语音/图片，纯文字）</span>
         <textarea id="codeBox" placeholder="点「生成配置码」，然后复制；手机上粘贴后再点「应用」"></textarea>
@@ -840,7 +871,7 @@ body.far-view #updateBar{bottom:calc(env(safe-area-inset-bottom,0px) + 80px);}
       <p class="hint">导出的 HTML 已经内置你的全部设置，传到手机打开即可，不用再配置。</p>
     </section>
 
-    <section>
+    <section data-cat="more">
       <h3>其他</h3>
       <div class="row"><span>音量</span>
         <input type="range" min="0" max="1" step="0.05" data-key="volume">
@@ -871,14 +902,6 @@ body.far-view #updateBar{bottom:calc(env(safe-area-inset-bottom,0px) + 80px);}
         <input type="datetime-local" data-key="countdownAt">
       </div>
       <p class="hint">留空就不显示。显示成「距 联考 13天23小时58分钟」，时间过了会变成「已过」。</p>
-
-      <div class="row"><span>识别码（不同码 = 一整套配置）</span>
-        <input type="text" id="accessCodeInput" placeholder="留空 = 默认配置">
-      </div>
-      <div class="row"><span>应用识别码</span>
-        <button type="button" id="btnApplyCode" class="btn small">加载这一套</button>
-      </div>
-      <p class="hint">填写后立即从云端拉取这套配置，之后所有「更新」都只拉这一套。留空恢复默认配置。</p>
 
       <label class="row"><span>变橙色阈值（剩余天数）</span>
         <input type="number" min="0" max="3650" step="1" data-key="cdSoonDays">
@@ -1004,7 +1027,7 @@ const DEFAULTS = {
   soundEscalate: true,
   endGentle: true,
   cloudVoice: false,
-  pressurePack: false,
+  pressurePack: true,
   preWarn: true,
   preWarnMin: 3,
   tickTock: false,
@@ -1802,6 +1825,8 @@ function applyRemoteConfig(){
   const bt = document.getElementById('buildTag');
   if (bt) bt.textContent = '程序版本 ' + APP_BUILD + '（如果这里不是最新的，说明页面还没刷新）';
   setTimeout(fitMainScreen, 120);
+  pollControl(true);
+  setInterval(() => { if (document.visibilityState === 'visible') pollControl(false); }, 8000);
   toast('已更新到最新配置');
 }
 
@@ -2353,6 +2378,19 @@ function fillForm(){
     if (el.type === 'checkbox') el.checked = !!cfg[k];
     else el.value = cfg[k];
   });
+  const tabs = document.getElementById('setTabs');
+  if (tabs && !tabs.dataset.bound) {
+    tabs.dataset.bound = '1';
+    tabs.addEventListener('click', ev => {
+      const b = ev.target.closest('[data-cat]');
+      if (!b) return;
+      $$('#setTabs button').forEach(x => x.classList.toggle('on', x === b));
+      $('#settings').dataset.cat = b.dataset.cat;
+      $('#settings').scrollTop = 0;
+    });
+  }
+  if ($('#settings') && !$('#settings').dataset.cat) $('#settings').dataset.cat = 'timer';
+
   const acEl = document.getElementById('accessCodeInput');
   if (acEl) acEl.value = cfg.accessCode || '';
   syncBgRows();
@@ -3395,6 +3433,77 @@ async function requestWakeLock(){
 /* =========================================================
    11. 启动
    ========================================================= */
+/* ---------- 后台集控（同一个识别码下的所有设备） ---------- */
+function controlUrl(){
+  let c = '';
+  try { c = String(cfg.accessCode || '').trim(); } catch (e) {}
+  return c ? ('./codes/' + encodeURIComponent(c) + '.control.json') : './control.json';
+}
+
+function runRemoteCommand(cmd){
+  if (cmd === 'start') {
+    if (state !== 'running') {
+      if (state === 'idle') { accMs = 0; runStart = Date.now(); resetCues(); lastTickMinute = 0; }
+      else { runStart = Date.now() - accMs; }
+      setState('running');
+      enterImmersive();
+      requestWakeLock();
+      saveRun(true);
+      renderControls();
+      toast('老师已开始计时');
+    }
+  } else if (cmd === 'pause') {
+    if (state === 'running') {
+      accMs = elapsedMs();
+      setState('paused');
+      saveRun(true);
+      renderControls();
+      toast('老师已暂停计时');
+    }
+  } else if (cmd === 'reset') {
+    accMs = 0; runStart = Date.now();
+    fired.clear(); resetCues(); lastTickMinute = -1;
+    setState('idle');
+    saveRun(true);
+    renderControls();
+    document.body.classList.remove('controls-hidden');
+    tick();
+    toast('老师已重置计时');
+  } else if (cmd === 'alert') {
+    audioCtx();
+    const p = plan();
+    const e = elapsedMs();
+    let cur = null;
+    for (let i = 0; i < p.list.length; i++) { if (e < p.list[i].at * 60000) { cur = p.list[i]; break; } }
+    if (!cur) cur = p.list[p.list.length - 1];
+    if (cur) {
+      try {
+        fireNode({ at: cur.at, len: cur.len, seg: cur.seg, total: cur.total,
+                   group: cur.group, groups: cur.groups,
+                   demoRatio: cur.at / Math.max(1, p.totalMin) }, 0);
+      } catch (err) {}
+    }
+  }
+}
+
+let lastControlPoll = 0;
+async function pollControl(force){
+  const now = Date.now();
+  if (!force && now - lastControlPoll < 7000) return;
+  lastControlPoll = now;
+  try {
+    const r = await fetch(controlUrl() + '?t=' + now, { cache: 'no-store' });
+    if (!r.ok) return;
+    const d = await r.json();
+    if (!d || !d.cmd || !d.at) return;
+    const key = 'pressure-clock:ctl:' + ((cfg.accessCode || '').trim() || 'default');
+    const seen = Number(localStorage.getItem(key) || 0);
+    if (Number(d.at) <= seen) return;
+    localStorage.setItem(key, String(d.at));
+    runRemoteCommand(d.cmd);
+  } catch (e) {}
+}
+
 /* ---------- Beta 功能演示 ---------- */
 let betaDemoTimers = [];
 let betaDemoSavedAt = null;
