@@ -146,14 +146,14 @@ body.far-view #alertALabel{font-size:clamp(30px,11.5vh,108px);}
 body.far-view #alertAClock{font-size:clamp(56px,33vh,250px);}
 body.far-view #lateBadge{font-size:clamp(12px,2.9vh,21px);}
 body.far-view #alertB{padding:5vh 6vw;gap:2.6vh;}
-body.far-view #bTitle{font-size:clamp(32px,12.6vh,118px);line-height:1.08;}
-body.far-view #bSub{font-size:clamp(19px,8.2vh,70px);line-height:1.3;}
-body.far-view #bFoot{font-size:clamp(13px,3.8vh,30px);}
+body.far-view #bTitle{font-size:calc(clamp(32px,12.6vh,118px) * var(--fit,1));line-height:1.08;}
+body.far-view #bSub{font-size:calc(clamp(19px,8.2vh,70px) * var(--fit,1));line-height:1.3;}
+body.far-view #bFoot{font-size:calc(clamp(13px,3.8vh,30px) * var(--fit,1));}
 body.far-view #bCountdown{
   position:relative;z-index:2;
   margin-top:1.2vh;padding-top:1.6vh;
   border-top:1px solid rgba(255,255,255,.18);
-  font-size:clamp(13px,3.1vh,30px);
+  font-size:calc(clamp(13px,3.1vh,30px) * var(--fit,1));
   color:rgba(255,255,255,.78);
   letter-spacing:.06em;font-variant-numeric:tabular-nums;
   white-space:nowrap;
@@ -246,19 +246,19 @@ body.controls-hidden #controls{opacity:0;pointer-events:none;}
 @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
 #bTitle{
   position:relative;z-index:2;
-  font-size:clamp(28px,9.4vh,90px);font-weight:700;line-height:1.14;
+  font-size:calc(clamp(28px,9.4vh,90px) * var(--fit,1));font-weight:700;line-height:1.14;
   letter-spacing:.01em;white-space:pre-line;
   text-shadow:0 2px 30px rgba(0,0,0,.6);
 }
 #bSub{
   position:relative;z-index:2;
-  font-size:clamp(16px,3.8vh,34px);font-weight:400;line-height:1.5;opacity:.88;
+  font-size:calc(clamp(16px,3.8vh,34px) * var(--fit,1));font-weight:400;line-height:1.5;opacity:.88;
   white-space:pre-line;max-width:82vw;
   text-shadow:0 2px 20px rgba(0,0,0,.55);
 }
 #bFoot{
   position:relative;z-index:2;
-  font-size:clamp(12px,2.2vh,20px);opacity:.45;letter-spacing:.09em;
+  font-size:calc(clamp(12px,2.2vh,20px) * var(--fit,1));opacity:.45;letter-spacing:.09em;
   white-space:pre-line;
 }
 #alertB.style-slam #bTitle{animation:slamIn .6s cubic-bezier(.2,1.35,.4,1) both;}
@@ -425,7 +425,7 @@ body.controls-hidden #controls{opacity:0;pointer-events:none;}
   display:flex;flex-direction:column;gap:8px;
   width:min(92vw, 560px);
   background:#111;color:#fff;padding:14px 16px;border-radius:16px;
-  font-size:14px;z-index:350;box-shadow:0 14px 40px rgba(0,0,0,.32);
+  font-size:14px;z-index:40;box-shadow:0 14px 40px rgba(0,0,0,.32);
 }
 #updateBar.hidden{display:none;}
 .ub-head{font-weight:600;font-size:15px;}
@@ -800,7 +800,7 @@ body.far-view #updateBar{bottom:calc(env(safe-area-inset-bottom,0px) + 80px);}
 </div>
 <div id="toast"></div>
 
-<script id="presetData">window.__PRESET__={"id":"pwa-20261114e","config":{"groups":[{"id":"g-main","name":"素描","segments":[30,45,45,60],"segmentsText":"30,45,45,60","segMeta":[{"label":"","sound":"","title":"起型","subtitle":"先把位置定住，加油！","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"铺大关系","subtitle":"明暗大胆压，别抠细节","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"揉擦","subtitle":"你得擦完是个人吧","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"进一步细化","subtitle":"画前再推远看看大关系","footer":"-S'y","autoClose":""}],"endMeta":{"label":"","sound":"","title":"考试结束","subtitle":"请各位考生有序离场","footer":"-S'y","autoClose":0}},{"id":"gmwesib3l15jl","name":"速写","segments":[30,60,30],"segmentsText":"30，60，30","segMeta":[{"label":"","sound":"","title":"起型","subtitle":"抓动态，别磨蹭","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"画人","subtitle":"大胆下笔，别描线","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"画背景","subtitle":"几笔带过，别抢主体","footer":"-S'y","autoClose":""}],"endMeta":{"label":"","sound":"","title":"速写结束","subtitle":"放下笔，退远看看","footer":"-S'y","autoClose":""}},{"id":"gmwesjmr7sxq0","name":"色彩","segments":[25,60,45,20,30],"segmentsText":"25，60，45，20，30","segMeta":[{"label":"","sound":"","title":"起型","subtitle":"加油宝贝们！","footer":"-S'y","autoClose":3},{"label":"","sound":"","title":"铺大色","subtitle":"咋样了～！","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"主体物塑造","subtitle":"该抠细节了，往实里画","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"收尾","subtitle":"快画！死手，快快快！","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"要晾干哦！","subtitle":"","footer":"-S'y","autoClose":""}],"endMeta":{"label":"","sound":"","title":"考试结束","subtitle":"请各位考生有序离场","footer":"-S'y","autoClose":0}}],"activeGroupId":"gmwesjmr7sxq0","repeat":1,"alertBaseSeconds":3,"alertTemplate":"已过 {n} 分钟","beepSound":"bell","vibrate":true,"reduceFlash":false,"title":"抬起头。","subtitle":"这一段时间已经过去了，\n剩下的不会等你。","footer":"—— 你写给自己的话","bgType":"gradient","bgColor1":"#1a0505","bgColor2":"#5c0d0d","animStyle":"typewriter","volume":0.8,"showRemain":true,"autoCloseSeconds":3,"viewMode":"normal","countdownName":"联考","countdownAt":"2026-11-28T08:30","endGentle":true,"cloudVoice":false,"endShowCountdown":true},"assets":{}};</script>
+<script id="presetData">window.__PRESET__={"id":"pwa-20261114f","config":{"groups":[{"id":"g-main","name":"素描","segments":[30,45,45,60],"segmentsText":"30,45,45,60","segMeta":[{"label":"","sound":"","title":"起型","subtitle":"先把位置定住，加油！","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"铺大关系","subtitle":"明暗大胆压，别抠细节","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"揉擦","subtitle":"你得擦完是个人吧","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"进一步细化","subtitle":"画前再推远看看大关系","footer":"-S'y","autoClose":""}],"endMeta":{"label":"","sound":"","title":"考试结束","subtitle":"请各位考生有序离场","footer":"-S'y","autoClose":0}},{"id":"gmwesib3l15jl","name":"速写","segments":[30,60,30],"segmentsText":"30，60，30","segMeta":[{"label":"","sound":"","title":"起型","subtitle":"抓动态，别磨蹭","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"画人","subtitle":"大胆下笔，别描线","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"画背景","subtitle":"几笔带过，别抢主体","footer":"-S'y","autoClose":""}],"endMeta":{"label":"","sound":"","title":"速写结束","subtitle":"放下笔，退远看看","footer":"-S'y","autoClose":""}},{"id":"gmwesjmr7sxq0","name":"色彩","segments":[25,60,45,20,30],"segmentsText":"25，60，45，20，30","segMeta":[{"label":"","sound":"","title":"起型","subtitle":"加油宝贝们！","footer":"-S'y","autoClose":3},{"label":"","sound":"","title":"铺大色","subtitle":"咋样了～！","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"主体物塑造","subtitle":"该抠细节了，往实里画","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"收尾","subtitle":"快画！死手，快快快！","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"要晾干哦！","subtitle":"","footer":"-S'y","autoClose":""}],"endMeta":{"label":"","sound":"","title":"考试结束","subtitle":"请各位考生有序离场","footer":"-S'y","autoClose":0}}],"activeGroupId":"gmwesjmr7sxq0","repeat":1,"alertBaseSeconds":3,"alertTemplate":"已过 {n} 分钟","beepSound":"bell","vibrate":true,"reduceFlash":false,"title":"抬起头。","subtitle":"这一段时间已经过去了，\n剩下的不会等你。","footer":"—— 你写给自己的话","bgType":"gradient","bgColor1":"#1a0505","bgColor2":"#5c0d0d","animStyle":"typewriter","volume":0.8,"showRemain":true,"autoCloseSeconds":3,"viewMode":"normal","countdownName":"联考","countdownAt":"2026-11-28T08:30","endGentle":true,"cloudVoice":false,"endShowCountdown":true},"assets":{}};</script>
 <script>
 (function(){
 'use strict';
@@ -1951,6 +1951,21 @@ function fireNode(item, lateMs){
   alertTimer = setTimeout(() => showStageB(item, level), durMs);
 }
 
+/* 文字撑出屏幕时自动按比例缩小，保证倒计时和按钮永远可见 */
+function fitAlertB(){
+  const b = document.getElementById('alertB');
+  if (!b || !b.classList.contains('on')) return;
+  b.style.setProperty('--fit', '1');
+  let k = 1;
+  for (let i = 0; i < 14; i++) {
+    const over = b.scrollHeight > b.clientHeight + 1 || b.scrollWidth > b.clientWidth + 1;
+    if (!over) break;
+    k *= 0.94;
+    if (k < 0.5) break;
+    b.style.setProperty('--fit', k.toFixed(3));
+  }
+}
+
 function showStageB(item, level){
   stopFlash();
   alertA.classList.remove('on');
@@ -1977,11 +1992,16 @@ function showStageB(item, level){
   const animate = cfg.animStyle === 'typewriter';
   typeInto(tEl, prof.title, 52, () => {
     typeInto(sEl, prof.subtitle, 26, () => {
-      typeInto(fEl, prof.footer, 30, null, animate);
+      typeInto(fEl, prof.footer, 30, () => setTimeout(fitAlertB, 60), animate);
     }, animate);
   }, animate);
 
   setTimeout(() => $('#btnContinue').classList.remove('hidden'), 650);
+  setTimeout(fitAlertB, 60);
+  setTimeout(fitAlertB, 800);
+  setTimeout(fitAlertB, 2000);
+  setTimeout(fitAlertB, 4000);
+  setTimeout(fitAlertB, 6000);
 
   currentSrc = null;
   setTimeout(() => {
@@ -2623,6 +2643,9 @@ function bindEvents(){
   });
 
   $('#btnCheckUpdate').addEventListener('click', () => { checkUpdateNow(); });
+
+  window.addEventListener('resize', () => { if (alertB.classList.contains('on')) fitAlertB(); });
+  window.addEventListener('orientationchange', () => setTimeout(() => { if (alertB.classList.contains('on')) fitAlertB(); }, 300));
 
   $('#btnDemoAll').addEventListener('click', () => { demoAllStages(); });
 
