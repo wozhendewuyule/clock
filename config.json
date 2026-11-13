@@ -1,6 +1,6 @@
 {
- "version": 1794579816,
- "updatedAt": "2026-11-13 22:23",
+ "version": 1794580150457,
+ "updatedAt": "2026-11-13 22:29",
  "config": {
   "groups": [
    {
@@ -19,49 +19,49 @@
       "label": "",
       "sound": "",
       "title": "起型",
-      "subtitle": "",
-      "footer": "",
+      "subtitle": "先把位置定住，加油！",
+      "footer": "-S'y",
       "autoClose": ""
      },
      {
       "label": "",
       "sound": "",
       "title": "铺大关系",
-      "subtitle": "",
-      "footer": "",
+      "subtitle": "明暗大胆压，别抠细节",
+      "footer": "-S'y",
       "autoClose": ""
      },
      {
       "label": "",
       "sound": "",
       "title": "揉擦",
-      "subtitle": "",
-      "footer": "",
+      "subtitle": "擦出层次，手别太重",
+      "footer": "-S'y",
       "autoClose": ""
      },
      {
       "label": "",
       "sound": "",
       "title": "进一步细化",
-      "subtitle": "",
-      "footer": "",
+      "subtitle": "该抠细节了，往实里画",
+      "footer": "-S'y",
       "autoClose": ""
      },
      {
       "label": "",
       "sound": "",
       "title": "塑造",
-      "subtitle": "",
-      "footer": "",
+      "subtitle": "最后一口气，把体积做出来！",
+      "footer": "-S'y",
       "autoClose": ""
      }
     ],
     "endMeta": {
      "label": "",
      "sound": "",
-     "title": "",
-     "subtitle": "",
-     "footer": "",
+     "title": "考试结束",
+     "subtitle": "请各位考生有序离场",
+     "footer": "-S'y",
      "autoClose": ""
     }
    },
@@ -79,33 +79,33 @@
       "label": "",
       "sound": "",
       "title": "起型",
-      "subtitle": "",
-      "footer": "",
+      "subtitle": "抓动态，别磨蹭",
+      "footer": "-S'y",
       "autoClose": ""
      },
      {
       "label": "",
       "sound": "",
       "title": "画人",
-      "subtitle": "",
-      "footer": "",
+      "subtitle": "大胆下笔，别描线",
+      "footer": "-S'y",
       "autoClose": ""
      },
      {
       "label": "",
       "sound": "",
       "title": "画背景",
-      "subtitle": "",
-      "footer": "",
+      "subtitle": "几笔带过，别抢主体",
+      "footer": "-S'y",
       "autoClose": ""
      }
     ],
     "endMeta": {
      "label": "",
      "sound": "",
-     "title": "",
-     "subtitle": "",
-     "footer": "",
+     "title": "速写结束",
+     "subtitle": "放下笔，退远看看",
+     "footer": "-S'y",
      "autoClose": ""
     }
    },
