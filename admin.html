@@ -127,6 +127,18 @@ textarea{min-height:62px;resize:vertical;}
 </section>
 
 <section>
+  <h2>集控（同一识别码的所有设备）</h2>
+  <p class="hint">点下面的按钮会把指令写到 <code>codes/码.control.json</code>（或 <code>control.json</code>）。前台开着的设备约 8 秒内响应。</p>
+  <div class="row">
+    <button type="button" id="btnCtlStart" class="primary">全体开始</button>
+    <button type="button" id="btnCtlPause">全体暂停</button>
+    <button type="button" id="btnCtlReset" class="danger">全体重置</button>
+    <button type="button" id="btnCtlAlert">全体报时</button>
+  </div>
+  <p class="hint" id="ctlState">尚未下发指令</p>
+</section>
+
+<section>
   <h2>Beta 压力包</h2>
   <label><input type="checkbox" id="pressurePack" style="width:auto;margin-right:8px" />启用 Beta 压力包</label>
   <label><input type="checkbox" id="preWarn" style="width:auto;margin-right:8px" />段内预警（结束前提醒）</label>
@@ -506,6 +518,49 @@ textarea{min-height:62px;resize:vertical;}
     el.addEventListener('change', apply);
     el.addEventListener('input', apply);
   });
+
+  async function sendControl(cmd){
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (!token) { status('先设置 token 才能集控', 'err'); return; }
+    const path = ACCESS_CODE
+      ? ('codes/' + encodeURIComponent(ACCESS_CODE) + '.control.json')
+      : 'control.json';
+    const api = 'https://api.github.com/repos/' + REPO + '/contents/' + path;
+    const headers = {
+      'Authorization': 'Bearer ' + token,
+      'Accept': 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28'
+    };
+    status('下发中…');
+    try {
+      let sha = null;
+      const g = await fetch(api + '?ref=' + BRANCH, { headers });
+      if (g.ok) { const j = await g.json(); sha = j.sha; }
+      const payload = { cmd: cmd, at: Date.now() };
+      const body = {
+        message: 'control ' + cmd + ' ' + payload.at,
+        content: btoa(unescape(encodeURIComponent(JSON.stringify(payload)))),
+        branch: BRANCH
+      };
+      if (sha) body.sha = sha;
+      const r = await fetch(api, {
+        method: 'PUT',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, headers),
+        body: JSON.stringify(body)
+      });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const st = document.getElementById('ctlState');
+      if (st) st.textContent = '已下发「' + cmd + '」· ' + new Date().toLocaleTimeString('zh-CN');
+      status('指令已下发', 'ok');
+    } catch (err) {
+      status('下发失败：' + err.message, 'err');
+    }
+  }
+
+  $('#btnCtlStart').addEventListener('click', () => sendControl('start'));
+  $('#btnCtlPause').addEventListener('click', () => sendControl('pause'));
+  $('#btnCtlReset').addEventListener('click', () => sendControl('reset'));
+  $('#btnCtlAlert').addEventListener('click', () => sendControl('alert'));
 
   $('#btnPublish').addEventListener('click', publish);
 
