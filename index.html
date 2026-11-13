@@ -35,11 +35,15 @@ button{font-family:inherit;color:inherit;cursor:pointer;}
 #clock{
   display:flex;align-items:baseline;
   font-size:clamp(54px,30vh,220px);
-  font-weight:200;line-height:.82;letter-spacing:-.045em;
+  font-weight:200;line-height:.82;letter-spacing:0;
   font-variant-numeric:tabular-nums;
   transition:color .3s ease;
 }
-#clockSec{font-size:.28em;font-weight:300;opacity:.36;margin-left:.05em;letter-spacing:0;}
+#clockHM{letter-spacing:-.045em;}
+#clockSec{
+  font-size:.3em;font-weight:300;opacity:.42;
+  margin-left:.16em;letter-spacing:0;
+}
 #meta{
   margin-top:2.8vh;display:flex;gap:clamp(24px,5.5vw,64px);align-items:baseline;
   font-size:clamp(20px,6.6vh,46px);
@@ -119,9 +123,9 @@ body.far-view #vignette{display:none;}
 }
 #farClock{
   font-size:clamp(24px,13.2vh,108px);font-weight:300;line-height:1;
-  letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:#111;
+  letter-spacing:0;font-variant-numeric:tabular-nums;color:#111;
 }
-#farClock i{font-style:normal;font-size:.5em;color:#bcbcc2;}
+#farClock i{font-style:normal;font-size:.52em;color:#a6a6ae;margin-left:.12em;letter-spacing:0;}
 .fr{
   display:flex;align-items:baseline;gap:.45em;
   font-size:clamp(14px,7.6vh,44px);color:#8a8a92;font-variant-numeric:tabular-nums;
@@ -202,10 +206,14 @@ body.controls-hidden #controls{opacity:0;pointer-events:none;}
 }
 #alertAClock{
   display:flex;align-items:baseline;
-  font-size:clamp(58px,33vh,240px);font-weight:200;line-height:.82;letter-spacing:-.045em;
+  font-size:clamp(58px,33vh,240px);font-weight:200;line-height:.82;letter-spacing:0;
   font-variant-numeric:tabular-nums;text-shadow:0 0 60px rgba(255,255,255,.35);
 }
-#alertASec{font-size:.28em;font-weight:300;opacity:.55;margin-left:.05em;}
+#alertAHM{letter-spacing:-.045em;}
+#alertASec{
+  font-size:.3em;font-weight:300;opacity:.82;
+  margin-left:.18em;letter-spacing:0;
+}
 #alertALabel{
   font-size:clamp(22px,7vh,62px);font-weight:600;letter-spacing:.03em;
   text-align:center;line-height:1.12;text-shadow:0 0 40px rgba(255,255,255,.3);
@@ -727,7 +735,7 @@ body.controls-hidden #controls{opacity:0;pointer-events:none;}
 <div id="audioLock" class="hidden">🔇 点一下屏幕以启用声音</div>
 <div id="toast"></div>
 
-<script id="presetData">window.__PRESET__={"id":"pwa-20261113j","config":{"groups":[{"id":"g-main","name":"素描","segments":[30,45,45,30,30],"segmentsText":"30，45，45，30，30","segMeta":[{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""},{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""},{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""},{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""},{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""}],"endMeta":{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""}},{"id":"gmwesib3l15jl","name":"速写","segments":[30,60,30],"segmentsText":"30，60，30","segMeta":[{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""},{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""},{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""}],"endMeta":{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""}},{"id":"gmwesjmr7sxq0","name":"色彩","segments":[25,60,45,20,30],"segmentsText":"25，60，45，20，30","segMeta":[{"label":"","sound":"","title":"起型","subtitle":"加油宝贝们！","footer":"-S'y","autoClose":3},{"label":"","sound":"","title":"铺大色","subtitle":"咋样了～！","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"主体物塑造","subtitle":"该抠细节了，往实里画","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"收尾","subtitle":"快画！死手，快快快！","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"要晾干哦！","subtitle":"","footer":"-S'y","autoClose":""}],"endMeta":{"label":"","sound":"","title":"考试结束","subtitle":"请各位考生有序离场","footer":"-S'y","autoClose":0}}],"activeGroupId":"gmwesjmr7sxq0","repeat":1,"alertBaseSeconds":3,"alertTemplate":"已过 {n} 分钟","beepSound":"bell","vibrate":true,"reduceFlash":false,"title":"抬起头。","subtitle":"这一段时间已经过去了，\n剩下的不会等你。","footer":"—— 你写给自己的话","bgType":"gradient","bgColor1":"#1a0505","bgColor2":"#5c0d0d","animStyle":"typewriter","volume":0.8,"showRemain":true,"autoCloseSeconds":3,"viewMode":"normal","countdownName":"联考","countdownAt":"2026-11-28T08:30","endGentle":true},"assets":{}};</script>
+<script id="presetData">window.__PRESET__={"id":"pwa-20261113k","config":{"groups":[{"id":"g-main","name":"素描","segments":[30,45,45,30,30],"segmentsText":"30，45，45，30，30","segMeta":[{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""},{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""},{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""},{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""},{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""}],"endMeta":{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""}},{"id":"gmwesib3l15jl","name":"速写","segments":[30,60,30],"segmentsText":"30，60，30","segMeta":[{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""},{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""},{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""}],"endMeta":{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""}},{"id":"gmwesjmr7sxq0","name":"色彩","segments":[25,60,45,20,30],"segmentsText":"25，60，45，20，30","segMeta":[{"label":"","sound":"","title":"起型","subtitle":"加油宝贝们！","footer":"-S'y","autoClose":3},{"label":"","sound":"","title":"铺大色","subtitle":"咋样了～！","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"主体物塑造","subtitle":"该抠细节了，往实里画","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"收尾","subtitle":"快画！死手，快快快！","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"要晾干哦！","subtitle":"","footer":"-S'y","autoClose":""}],"endMeta":{"label":"","sound":"","title":"考试结束","subtitle":"请各位考生有序离场","footer":"-S'y","autoClose":0}}],"activeGroupId":"gmwesjmr7sxq0","repeat":1,"alertBaseSeconds":3,"alertTemplate":"已过 {n} 分钟","beepSound":"bell","vibrate":true,"reduceFlash":false,"title":"抬起头。","subtitle":"这一段时间已经过去了，\n剩下的不会等你。","footer":"—— 你写给自己的话","bgType":"gradient","bgColor1":"#1a0505","bgColor2":"#5c0d0d","animStyle":"typewriter","volume":0.8,"showRemain":true,"autoCloseSeconds":3,"viewMode":"normal","countdownName":"联考","countdownAt":"2026-11-28T08:30","endGentle":true},"assets":{}};</script>
 <script id="configPatch">window.__PATCH__={id:'patch-gentle-20261113',apply:function(cfg){cfg.viewMode='normal';cfg.endGentle=true;cfg.countdownName='联考';cfg.countdownAt='2026-11-28T08:30';var g=(cfg.groups||[]).filter(function(x){return x.name==='色彩'||x.name==='芲彩';})[0];if(g&&g.segMeta&&g.segMeta[2]){g.segMeta[2].subtitle='该抠细节了，往实里画';}}};</script>
 <script>
 (function(){
