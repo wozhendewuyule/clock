@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#ffffff" />
 <link rel="manifest" href="./manifest.webmanifest" />
 <link rel="apple-touch-icon" href="./icon-180.png" />
-<title>施压时钟</title>
+<title>美术生的倒计时</title>
 <style>
 *,*::before,*::after{box-sizing:border-box;}
 html,body{height:100%;margin:0;padding:0;overflow:hidden;overscroll-behavior:none;}
@@ -723,8 +723,8 @@ body.controls-hidden #controls{opacity:0;pointer-events:none;}
 <div id="audioLock" class="hidden">🔇 点一下屏幕以启用声音</div>
 <div id="toast"></div>
 
-<script id="presetData">window.__PRESET__={"id":"pwa-20261113f","config":{"groups":[{"id":"g-main","name":"素描","segments":[30,45,45,30,30],"segmentsText":"30，45，45，30，30","segMeta":[{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""},{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""},{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""},{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""},{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""}],"endMeta":{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""}},{"id":"gmwesib3l15jl","name":"速写","segments":[30,60,30],"segmentsText":"30，60，30","segMeta":[{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""},{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""},{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""}],"endMeta":{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""}},{"id":"gmwesjmr7sxq0","name":"色彩","segments":[25,60,45,20,30],"segmentsText":"25，60，45，20，30","segMeta":[{"label":"","sound":"","title":"起型","subtitle":"加油宝贝们！","footer":"-S'y","autoClose":3},{"label":"","sound":"","title":"铺大色","subtitle":"咋样了～！","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"主体物塑造","subtitle":"孩子们画的咋样了","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"收尾","subtitle":"快画！死手，快快快！","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"要晾干哦！","subtitle":"","footer":"-S'y","autoClose":""}],"endMeta":{"label":"","sound":"","title":"考试结束","subtitle":"请各位考生有序离场","footer":"-S'y","autoClose":0}}],"activeGroupId":"gmwesjmr7sxq0","repeat":1,"alertBaseSeconds":3,"alertTemplate":"已过 {n} 分钟","beepSound":"bell","vibrate":true,"reduceFlash":false,"title":"抬起头。","subtitle":"这一段时间已经过去了，\n剩下的不会等你。","footer":"—— 你写给自己的话","bgType":"gradient","bgColor1":"#1a0505","bgColor2":"#5c0d0d","animStyle":"typewriter","volume":0.8,"showRemain":true,"autoCloseSeconds":3,"viewMode":"normal","countdownName":"联考","countdownAt":"2026-11-28T08:30"},"assets":{}};</script>
-<script id="configPatch">window.__PATCH__={id:'patch-normal-exam-20261113',apply:function(cfg){cfg.viewMode='normal';cfg.countdownName='联考';cfg.countdownAt='2026-11-28T08:30';}};</script>
+<script id="presetData">window.__PRESET__={"id":"pwa-20261113g","config":{"groups":[{"id":"g-main","name":"素描","segments":[30,45,45,30,30],"segmentsText":"30，45，45，30，30","segMeta":[{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""},{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""},{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""},{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""},{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""}],"endMeta":{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""}},{"id":"gmwesib3l15jl","name":"速写","segments":[30,60,30],"segmentsText":"30，60，30","segMeta":[{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""},{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""},{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""}],"endMeta":{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""}},{"id":"gmwesjmr7sxq0","name":"色彩","segments":[25,60,45,20,30],"segmentsText":"25，60，45，20，30","segMeta":[{"label":"","sound":"","title":"起型","subtitle":"加油宝贝们！","footer":"-S'y","autoClose":3},{"label":"","sound":"","title":"铺大色","subtitle":"咋样了～！","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"主体物塑造","subtitle":"孩子们画的咋样了","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"收尾","subtitle":"快画！死手，快快快！","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"要晾干哦！","subtitle":"","footer":"-S'y","autoClose":""}],"endMeta":{"label":"","sound":"","title":"考试结束","subtitle":"请各位考生有序离场","footer":"-S'y","autoClose":0}}],"activeGroupId":"gmwesjmr7sxq0","repeat":1,"alertBaseSeconds":3,"alertTemplate":"已过 {n} 分钟","beepSound":"bell","vibrate":true,"reduceFlash":false,"title":"抬起头。","subtitle":"这一段时间已经过去了，\n剩下的不会等你。","footer":"—— 你写给自己的话","bgType":"gradient","bgColor1":"#1a0505","bgColor2":"#5c0d0d","animStyle":"typewriter","volume":0.8,"showRemain":true,"autoCloseSeconds":3,"viewMode":"normal","countdownName":"联考","countdownAt":"2026-11-28T08:30"},"assets":{}};</script>
+<script id="configPatch">window.__PATCH__={id:'patch-normal-exam-20261113b',apply:function(cfg){cfg.viewMode='normal';cfg.countdownName='联考';cfg.countdownAt='2026-11-28T08:30';}};</script>
 <script>
 (function(){
 'use strict';
@@ -2406,7 +2406,7 @@ async function exportHtml(){
     const at = html.lastIndexOf('</body>');
     html = at >= 0 ? (html.slice(0, at) + tag + '\n' + html.slice(at)) : (html + tag);
   }
-  const name = '施压时钟-' + (activeGroup().name || '预设') + '.html';
+  const name = '美术生的倒计时-' + (activeGroup().name || '预设') + '.html';
   downloadFile(name, html);
   const n = Object.keys(preset.assets).length;
   toast(n ? ('已导出，含 ' + n + ' 个音频/图片') : '已导出');
