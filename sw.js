@@ -20,6 +20,13 @@ self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET') return;
 
+  /* 配置必须走网络，否则后台发布后永远拿不到新版 */
+  const u = new URL(req.url);
+  if (u.pathname.indexOf('config.json') >= 0) {
+    e.respondWith(fetch(req, { cache: 'no-store' }).catch(() => caches.match(req)));
+    return;
+  }
+
   if (req.mode === 'navigate') {
     e.respondWith(
       fetch(req, { cache: 'no-store' })
