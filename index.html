@@ -204,8 +204,13 @@ body.controls-hidden #controls{opacity:0;pointer-events:none;}
 .cmp-bar b{font-weight:600;}
 .cmp-bar .tag{opacity:.55;margin-left:6px;}
 .cmp-panes{flex:1;display:flex;gap:2px;min-height:0;background:#2a2a2e;}
-.cmp-pane{flex:1;position:relative;background:#fff;min-width:0;}
-.cmp-pane iframe{width:100%;height:100%;border:0;display:block;}
+.cmp-pane{flex:1;position:relative;background:#fff;min-width:0;overflow:hidden;}
+.cmp-pane .stage{
+  position:absolute;left:50%;top:50%;
+  transform:translate(-50%,-50%);
+  width:896px;height:414px;
+}
+.cmp-pane iframe{width:896px;height:414px;border:0;display:block;background:#fff;}
 .cmp-pane .cap{
   position:absolute;left:8px;top:8px;z-index:5;
   background:rgba(17,17,17,.85);color:#fff;font-size:11px;
@@ -213,7 +218,6 @@ body.controls-hidden #controls{opacity:0;pointer-events:none;}
 }
 body.cmp-embed #controls,
 body.cmp-embed #updateBar,
-body.cmp-embed #cue,
 body.cmp-embed #rotateHint,
 body.cmp-embed #audioLock{display:none !important;}
 .btn{
@@ -889,12 +893,19 @@ body.far-view #updateBar{bottom:calc(env(safe-area-inset-bottom,0px) + 80px);}
 </div>
 <div id="compareWrap" class="hidden">
   <div class="cmp-bar">
-    <span><b>新旧对比</b><span class="tag">同一时刻、同一配置</span></span>
-    <button type="button" id="btnCloseCompare" class="btn tiny">关闭</button>
+    <span><b>新旧对比</b><span class="tag" id="cmpHint">看右边：倒数日会变红，顶部会弹预警</span></span>
+    <span style="display:flex;gap:8px;">
+      <button type="button" id="btnReplayCompare" class="btn tiny">重播</button>
+      <button type="button" id="btnCloseCompare" class="btn tiny">关闭</button>
+    </span>
   </div>
   <div class="cmp-panes">
-    <div class="cmp-pane"><span class="cap">旧版 · Beta 关</span><iframe id="cmpOld" title="旧版"></iframe></div>
-    <div class="cmp-pane"><span class="cap">新版 · Beta 开</span><iframe id="cmpNew" title="新版"></iframe></div>
+    <div class="cmp-pane"><span class="cap">旧版 · Beta 关</span>
+      <div class="stage"><iframe id="cmpOld" title="旧版"></iframe></div>
+    </div>
+    <div class="cmp-pane"><span class="cap">新版 · Beta 开</span>
+      <div class="stage"><iframe id="cmpNew" title="新版"></iframe></div>
+    </div>
   </div>
 </div>
 <div id="cue" class="hidden"><span id="cueText"></span></div>
@@ -2358,7 +2369,9 @@ function showCue(text, kind, ms){
   tx.textContent = text;
   el.className = kind === 'warn' ? 'on warn' : 'on';
   clearTimeout(cueTimer);
-  cueTimer = setTimeout(() => { el.className = 'hidden'; }, ms || 2600);
+  let dur = ms || 2600;
+  if (document.body.classList.contains('cmp-embed')) dur = Math.max(dur, 6000);
+  cueTimer = setTimeout(() => { el.className = 'hidden'; }, dur);
 }
 
 function hideCue(){
@@ -2985,10 +2998,12 @@ function bindEvents(){
   $('#btnBetaDemo').addEventListener('click', () => { startBetaDemo(); });
   $('#btnExitBetaDemo').addEventListener('click', () => { stopBetaDemo(); });
   $('#btnCloseCompare').addEventListener('click', () => { closeCompare(); });
+  $('#btnReplayCompare').addEventListener('click', () => { loadCompareFrames(); });
 
   $('#btnCheckUpdate').addEventListener('click', () => { checkUpdateNow(); });
 
   window.addEventListener('resize', () => {
+    layoutCompare();
     fitMainScreen();
     if (alertB.classList.contains('on')) fitAlertB();
   });
@@ -3403,16 +3418,30 @@ function compareTargetSeconds(){
   } catch (e) { return 0; }
 }
 
+function layoutCompare(){
+  document.querySelectorAll('#compareWrap .cmp-pane').forEach(p => {
+    const stage = p.querySelector('.stage');
+    if (!stage) return;
+    const k = Math.min(p.clientWidth / 896, p.clientHeight / 414) || 1;
+    stage.style.transform = 'translate(-50%,-50%) scale(' + k.toFixed(4) + ')';
+  });
+}
+
+function loadCompareFrames(){
+  const at = compareTargetSeconds();
+  const b = Date.now();
+  document.getElementById('cmpOld').src = '?cmp=old&at=' + at + '&cd=1&t=' + b;
+  document.getElementById('cmpNew').src = '?cmp=new&at=' + at + '&cd=1&t=' + b;
+}
+
 function openCompare(){
   const wrap = document.getElementById('compareWrap');
   if (!wrap) return;
   const st = document.getElementById('settings');
   if (st) st.classList.remove('on');
-  const at = compareTargetSeconds();
-  const bust = '&t=' + Date.now();
-  document.getElementById('cmpOld').src = '?cmp=old&at=' + at + bust;
-  document.getElementById('cmpNew').src = '?cmp=new&at=' + at + bust;
   wrap.classList.remove('hidden');
+  layoutCompare();
+  loadCompareFrames();
 }
 function closeCompare(){
   const wrap = document.getElementById('compareWrap');
@@ -3430,6 +3459,12 @@ function applyCompareParams(){
   if (!cmp) return false;
   document.body.classList.add('cmp-embed');
   cfg.pressurePack = (cmp === 'new');
+  if (q.get('cd')) {
+    const d = new Date(Date.now() + 11 * 3600 * 1000);
+    const p2 = x => String(x).padStart(2, '0');
+    cfg.countdownAt = d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate()) +
+                      'T' + p2(d.getHours()) + ':' + p2(d.getMinutes());
+  }
   const at = Number(q.get('at'));
   if (isFinite(at) && at > 0) {
     accMs = at * 1000;
