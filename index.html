@@ -870,6 +870,14 @@ body.far-view #updateBar{bottom:calc(env(safe-area-inset-bottom,0px) + 80px);}
       </div>
       <p class="hint">留空就不显示。显示成「距 联考 13天23小时58分钟」，时间过了会变成「已过」。</p>
 
+      <div class="row"><span>识别码（不同码 = 一整套配置）</span>
+        <input type="text" id="accessCodeInput" placeholder="留空 = 默认配置">
+      </div>
+      <div class="row"><span>应用识别码</span>
+        <button type="button" id="btnApplyCode" class="btn small">加载这一套</button>
+      </div>
+      <p class="hint">填写后立即从云端拉取这套配置，之后所有「更新」都只拉这一套。留空恢复默认配置。</p>
+
       <label class="row"><span>变橙色阈值（剩余天数）</span>
         <input type="number" min="0" max="3650" step="1" data-key="cdSoonDays">
       </label>
@@ -1000,6 +1008,7 @@ const DEFAULTS = {
   tickTock: false,
   endShowCountdown: true,
   countdownName: '联考',
+  accessCode: '',
   cdSoonDays: 7,
   cdUrgentHours: 24,
   countdownAt: '2026-11-28T08:30'
@@ -1576,7 +1585,19 @@ function restoreRun(){
   }
   return true;
 }
-/* 从线上 config.json 拉取已发布的配置：只提示，不自动覆盖，由用户决定 */
+/* 识别码：不同码对应仓库里 codes/<码>.json 一整套独立配置 */
+function cfgUrl(){
+  let c = '';
+  try { c = String(cfg.accessCode || '').trim(); } catch (e) {}
+  return c ? ('./codes/' + encodeURIComponent(c) + '.json') : './config.json';
+}
+function verKey(){
+  let c = '';
+  try { c = String(cfg.accessCode || '').trim(); } catch (e) {}
+  return 'pressure-clock:remote-version' + (c ? ':' + c : '');
+}
+
+/* 从线上拉取已发布的配置：只提示，不自动覆盖，由用户决定 */
 let pendingRemote = null;
 
 /* 比较当前配置与线上配置，列出具体改动 */
@@ -1672,7 +1693,7 @@ function fmtVersion(v){
   return p2(d.getMonth() + 1) + '/' + p2(d.getDate()) + ' ' + p2(d.getHours()) + ':' + p2(d.getMinutes());
 }
 function appliedVersion(){
-  try { return localStorage.getItem('pressure-clock:remote-version') || ''; } catch (e) { return ''; }
+  try { return localStorage.getItem(verKey()) || ''; } catch (e) { return ''; }
 }
 
 let updateResultTimer = null;
@@ -1717,11 +1738,11 @@ function hideUpdateBar(){
 
 async function loadRemoteConfig(){
   try {
-    const r = await fetch('./config.json?t=' + Date.now(), { cache: 'no-store' });
+    const r = await fetch(cfgUrl() + '?t=' + Date.now(), { cache: 'no-store' });
     if (!r.ok) return false;
     const data = await r.json();
     if (!data || !data.config || data.version === undefined) return false;
-    if (localStorage.getItem('pressure-clock:remote-version') === String(data.version)) return false;
+    if (localStorage.getItem(verKey()) === String(data.version)) return false;
 
     /* 本地压根没有配置（首次安装 / 存储被清）：直接采用，没必要问 */
     let hasLocal = false;
@@ -1735,7 +1756,7 @@ async function loadRemoteConfig(){
     const changes = diffConfig(cfg, data.config);
     if (!changes.length) {
       /* 内容其实一样，只是版本号变了：静默记下，不打扰 */
-      try { localStorage.setItem('pressure-clock:remote-version', String(data.version)); } catch (e) {}
+      try { localStorage.setItem(verKey(), String(data.version)); } catch (e) {}
       return false;
     }
     pendingRemote = data;
@@ -1750,8 +1771,11 @@ async function loadRemoteConfig(){
 function applyRemoteConfig(){
   const data = pendingRemote;
   if (!data) return;
+  const keepCode = cfg.accessCode || '';
   const merged = JSON.parse(JSON.stringify(DEFAULTS));
   Object.keys(merged).forEach(k => { if (data.config[k] !== undefined) merged[k] = data.config[k]; });
+  /* 识别码是「本机设置」，不能被云端配置里的空值冲掉 */
+  merged.accessCode = keepCode;
   cfg = merged;
   try { cfg.groups.forEach(g => normalizeGroup(g)); } catch (e) {}
   if (!cfg.groups || !cfg.groups.length) {
@@ -1760,7 +1784,7 @@ function applyRemoteConfig(){
   }
   if (!cfg.groups.some(g => g.id === cfg.activeGroupId)) cfg.activeGroupId = cfg.groups[0].id;
   saveCfg();
-  try { localStorage.setItem('pressure-clock:remote-version', String(data.version)); } catch (e) {}
+  try { localStorage.setItem(verKey(), String(data.version)); } catch (e) {}
   pendingRemote = null;
   hideUpdateBar();
   /* 注意：不能直接清空 fired。计时进行中应用新配置时，
@@ -1783,7 +1807,7 @@ function applyRemoteConfig(){
 async function checkUpdateNow(){
   toast('检查更新…');
   try {
-    const r = await fetch('./config.json?t=' + Date.now(), { cache: 'no-store' });
+    const r = await fetch(cfgUrl() + '?t=' + Date.now(), { cache: 'no-store' });
     if (!r.ok) { toast('检查失败（网络或文件不存在）'); return; }
     const data = await r.json();
     if (!data || !data.config || data.version === undefined) { toast('没有可用的配置'); return; }
@@ -1806,7 +1830,7 @@ async function checkUpdateNow(){
 /* 用户点了「保持」：记下这版，不再追问 */
 function skipRemoteConfig(){
   if (!pendingRemote) { hideUpdateBar(); return; }
-  try { localStorage.setItem('pressure-clock:remote-version', String(pendingRemote.version)); } catch (e) {}
+  try { localStorage.setItem(verKey(), String(pendingRemote.version)); } catch (e) {}
   pendingRemote = null;
   hideUpdateBar();
   toast('已保留当前配置');
@@ -2326,6 +2350,8 @@ function fillForm(){
     if (el.type === 'checkbox') el.checked = !!cfg[k];
     else el.value = cfg[k];
   });
+  const acEl = document.getElementById('accessCodeInput');
+  if (acEl) acEl.value = cfg.accessCode || '';
   syncBgRows();
   renderGroupChips(true);
   updateSegSummary();
@@ -3018,6 +3044,15 @@ function bindEvents(){
     if (bgImageUrl) { URL.revokeObjectURL(bgImageUrl); bgImageUrl = null; }
     toast('背景图已清除');
     syncAssetNames();
+  });
+
+  $('#btnApplyCode').addEventListener('click', () => {
+    const el = document.getElementById('accessCodeInput');
+    const code = (el ? el.value : '').trim().slice(0, 40);
+    cfg.accessCode = code;
+    saveCfg();
+    try { localStorage.removeItem(verKey()); } catch (e) {}
+    checkUpdateNow();
   });
 
   $('#btnCompare').addEventListener('click', () => { openCompare(); });
