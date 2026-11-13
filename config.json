@@ -1,6 +1,6 @@
 {
- "version": 1794580150457,
- "updatedAt": "2026-11-13 22:29",
+ "version": 1794580973001,
+ "updatedAt": "2026-11-13 22:42",
  "config": {
   "groups": [
    {
@@ -10,10 +10,9 @@
      30,
      45,
      45,
-     30,
-     30
+     60
     ],
-    "segmentsText": "30，45，45，30，30",
+    "segmentsText": "30,45,45,60",
     "segMeta": [
      {
       "label": "",
@@ -35,7 +34,7 @@
       "label": "",
       "sound": "",
       "title": "揉擦",
-      "subtitle": "擦出层次，手别太重",
+      "subtitle": "你得擦完是个人吧",
       "footer": "-S'y",
       "autoClose": ""
      },
@@ -43,15 +42,7 @@
       "label": "",
       "sound": "",
       "title": "进一步细化",
-      "subtitle": "该抠细节了，往实里画",
-      "footer": "-S'y",
-      "autoClose": ""
-     },
-     {
-      "label": "",
-      "sound": "",
-      "title": "塑造",
-      "subtitle": "最后一口气，把体积做出来！",
+      "subtitle": "画前再推远看看大关系",
       "footer": "-S'y",
       "autoClose": ""
      }
@@ -62,7 +53,7 @@
      "title": "考试结束",
      "subtitle": "请各位考生有序离场",
      "footer": "-S'y",
-     "autoClose": ""
+     "autoClose": 0
     }
    },
    {
