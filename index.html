@@ -366,9 +366,12 @@ body.controls-hidden #controls{opacity:0;pointer-events:none;}
   font-size:calc(clamp(12px,2.5vh,19px) * var(--fit-main,1));color:#6b6b74;letter-spacing:.16em;text-indent:.16em;
 }
 #countdown{
-  font-size:clamp(12px,2.5vh,19px);color:#77777f;
+  font-size:calc(clamp(12px,2.5vh,19px) * var(--fit-main,1));color:#77777f;
   letter-spacing:.04em;font-variant-numeric:tabular-nums;
+  transition:color .4s ease;
 }
+#countdown.soon{color:#c2410c;font-weight:600;}
+#countdown.urgent{color:#e00000;font-weight:700;}
 #farCountdown{
   color:#8a8a92;font-variant-numeric:tabular-nums;
   min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
@@ -421,6 +424,21 @@ body.controls-hidden #controls{opacity:0;pointer-events:none;}
   0%,35%{transform:rotate(0deg);}
   65%,100%{transform:rotate(90deg);}
 }
+
+/* ---------- 段内提示条（发令 / 预警） ---------- */
+#cue{
+  position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 64px);
+  transform:translateX(-50%) translateY(-6px);
+  background:rgba(17,17,17,.92);color:#fff;
+  padding:10px 22px;border-radius:999px;
+  font-size:clamp(14px,3.2vh,24px);letter-spacing:.04em;
+  z-index:360;pointer-events:none;opacity:0;
+  transition:opacity .25s ease, transform .25s ease;
+  white-space:nowrap;
+}
+#cue.on{opacity:1;transform:translateX(-50%) translateY(0);}
+#cue.warn{background:#e00000;}
+body.far-view #cue{font-size:clamp(16px,4.4vh,36px);padding:12px 28px;}
 
 /* ---------- 配置更新询问条 ---------- */
 #updateBar{
@@ -642,6 +660,18 @@ body.far-view #updateBar{bottom:calc(env(safe-area-inset-bottom,0px) + 80px);}
       <div class="row"><span>试听</span>
         <button id="btnTestSound" class="btn small">播放一次</button>
       </div>
+      <div class="row"><span>段内预警（结束前提醒）</span>
+        <input type="checkbox" data-key="preWarn">
+      </div>
+      <label class="row"><span>提前多少分钟提醒</span>
+        <input type="number" min="1" max="30" step="1" data-key="preWarnMin">
+      </label>
+      <p class="hint">每段结束前会弹一条轻提示（例如「本段还剩 3 分钟」），不刷红屏；最后 30 秒再提示一次。</p>
+      <div class="row"><span>考场滴答声</span>
+        <input type="checkbox" data-key="tickTock">
+      </div>
+      <p class="hint">极轻的整分钟滴答，最后 5 分钟变每 30 秒一次。默认关闭，音量很轻。</p>
+
       <div class="row"><span>越靠后越急促</span>
         <input type="checkbox" data-key="soundEscalate">
       </div>
@@ -794,6 +824,7 @@ body.far-view #updateBar{bottom:calc(env(safe-area-inset-bottom,0px) + 80px);}
 </div>
 
 <div id="audioLock" class="hidden">🔇 点一下屏幕以启用声音</div>
+<div id="cue" class="hidden"><span id="cueText"></span></div>
 <div id="updateBar" class="hidden">
   <div class="ub-head" id="updateText">有新配置可用</div>
   <ul class="ub-list" id="updateList"></ul>
@@ -871,6 +902,9 @@ const DEFAULTS = {
   soundEscalate: true,
   endGentle: true,
   cloudVoice: false,
+  preWarn: true,
+  preWarnMin: 3,
+  tickTock: false,
   endShowCountdown: true,
   countdownName: '联考',
   countdownAt: '2026-11-28T08:30'
@@ -1012,7 +1046,7 @@ function plan(){
 
 /* 每一段的自定义配置：按段索引存放，空字符串表示「用全局默认」 */
 function blankSegMeta(){
-  return { label: '', sound: '', title: '', subtitle: '', footer: '', autoClose: '' };
+  return { label: '', sound: '', title: '', subtitle: '', footer: '', autoClose: '', level: '' };
 }
 function normalizeSegMeta(){
   normalizeGroup(activeGroup());
@@ -1050,6 +1084,8 @@ function profileFor(item){
   };
 
   const sound = pickChain('sound') || cfg.beepSound;
+  const lvRaw = (segs[i] && segs[i].level !== undefined && segs[i].level !== '') ? Number(segs[i].level) : 0;
+  const levelOverride = (isFinite(lvRaw) && lvRaw >= 1 && lvRaw <= 3) ? lvRaw : 0;
   const acRaw = pickChain('autoClose');
   const acNum = Number(acRaw);
   const autoClose = (acRaw === '' || acRaw === undefined || !isFinite(acNum))
@@ -1792,6 +1828,17 @@ function tick(){
     if (farCountdownEl) farCountdownEl.textContent = cd;
     lastCountdown = cd;
   }
+  /* 临近联考：7 天内橙、24 小时内红 */
+  let cdClass = '';
+  if (cfg.countdownAt) {
+    const t = new Date(cfg.countdownAt).getTime();
+    if (isFinite(t)) {
+      const left = t - Date.now();
+      if (left > 0 && left <= 24 * 3600 * 1000) cdClass = 'urgent';
+      else if (left > 0 && left <= 7 * 86400 * 1000) cdClass = 'soon';
+    }
+  }
+  if (countdownEl.className !== cdClass) countdownEl.className = cdClass;
   const totalMin = Math.max(1, p.totalMin);
   const spanMs = totalMin * 60000;
   const e = elapsedMs();
@@ -1836,6 +1883,7 @@ function tick(){
   }
 
   saveRun(false);
+  if (!alertActive) checkCues(p, e, cur);
   if (!alertActive) checkNodes(e);
 }
 
@@ -2020,7 +2068,8 @@ function fireNode(item, lateMs){
   const spanMs = Math.max(1, p.totalMin) * 60000;
   /* 演示时按「那一段所处的时间点」算强度，不然永远是第一档 */
   const ratio = clamp(item && item.demoRatio != null ? item.demoRatio : (e / spanMs), 0, 1);
-  const level = levelFor(ratio);
+  /* 段自定义档位优先，其次按进度自动判断 */
+  const level = clamp((prof.levelOverride || levelFor(ratio)), 1, 3);
 
   const base = clamp(Number(cfg.alertBaseSeconds) || 3, 0.5, 12);
   const durMs = base * 1000 * LEVEL_MULT[level - 1];
@@ -2218,6 +2267,76 @@ function onSettingInput(ev){
   if (k === 'repeat') { updateSegSummary(); renderTicks(); tick(); }
 }
 /* ---------- 组切换 ---------- */
+/* ---------- 段内提示条：发令与预警 ---------- */
+let cueTimer = null;
+function showCue(text, kind, ms){
+  const el = document.getElementById('cue');
+  const tx = document.getElementById('cueText');
+  if (!el || !tx) return;
+  tx.textContent = text;
+  el.className = kind === 'warn' ? 'on warn' : 'on';
+  clearTimeout(cueTimer);
+  cueTimer = setTimeout(() => { el.className = 'hidden'; }, ms || 2600);
+}
+
+/* 记录哪些段已经发过令/预警，避免重复 */
+const cueDone = { start: new Set(), warn: new Set() };
+function resetCues(){ cueDone.start.clear(); cueDone.warn.clear(); }
+
+/* 极轻的一次「滴」 */
+function tickSound(freq, vol){
+  const ctx = audioCtx();
+  if (!ctx) return;
+  const out = ctx.createGain();
+  out.gain.value = clamp(Number(cfg.volume) || 0, 0, 1) * (vol || 0.18);
+  out.connect(ctx.destination);
+  tone(ctx, out, { freq: freq || 1180, dur: 0.06, peak: 0.5, attack: 0.002 });
+}
+
+/* 每次 tick 检查：段开始 / 段结束前 3 分钟 / 最后 30 秒 / 滴答 */
+let lastTickMinute = -1;
+function checkCues(p, e, cur){
+  const g = activeGroup();
+  const totalMin = Math.max(1, p.totalMin);
+  const elapsedMin = e / 60000;
+
+  /* 开场发令：进入新的一段 */
+  const idx = cur ? (cur.seg - 1) : -1;
+  if (cur && !cueDone.start.has(idx)) {
+    cueDone.start.add(idx);
+    const name = segNameAt(idx);
+    showCue('第 ' + cur.seg + '/' + cur.total + ' 段 · ' + name, '', 2400);
+    tickSound(1320, 0.22);
+  }
+
+  /* 段结束前预警 */
+  if (cur && cfg.preWarn !== false) {
+    const leftSec = (cur.at * 60000 - e) / 1000;
+    const lead = clamp(Number(cfg.preWarnMin) || 3, 1, 30) * 60;
+    if (leftSec <= lead && leftSec > lead - 3 && !cueDone.warn.has('m' + cur.at)) {
+      cueDone.warn.add('m' + cur.at);
+      showCue('本段还剩 ' + Math.round(lead / 60) + ' 分钟', 'warn', 2600);
+      tickSound(880, 0.26);
+    }
+    if (leftSec <= 30 && leftSec > 27 && !cueDone.warn.has('s' + cur.at)) {
+      cueDone.warn.add('s' + cur.at);
+      showCue('最后 30 秒', 'warn', 2600);
+      tickSound(660, 0.3);
+    }
+  }
+
+  /* 考场滴答：整分钟一声，最后 5 分钟每 30 秒 */
+  if (cfg.tickTock) {
+    const remainMin = totalMin - elapsedMin;
+    const step = remainMin <= 5 ? 0.5 : 1;
+    const slot = Math.floor(elapsedMin / step);
+    if (slot !== lastTickMinute) {
+      lastTickMinute = slot;
+      if (elapsedMin > 0.02) tickSound(remainMin <= 5 ? 1400 : 1100, 0.12);
+    }
+  }
+}
+
 /* ---------- 倒数日 ---------- */
 function countdownText(){
   const at = String(cfg.countdownAt || '').trim();
@@ -2251,6 +2370,8 @@ function resetSession(){
   accMs = 0;
   runStart = 0;
   fired.clear();
+  resetCues();
+  lastTickMinute = -1;
   document.body.classList.remove('controls-hidden');
   renderControls();
 }
@@ -2352,6 +2473,14 @@ function metaFieldsHtml(scope, m){
     +   '<select' + S + ' data-field="sound">'
     +     '<option value=""' + (m.sound ? '' : ' selected') + '>跟随上一段</option>'
     +     opt('bell', '铃音') + opt('chime', '钟声') + opt('beep', '电子') + opt('none', '静音')
+    +   '</select>'
+    + '</div>'
+    + '<div class="row"><span>压力档位</span>'
+    +   '<select' + S + ' data-field="level">'
+    +     '<option value=""' + (m.level === '' || m.level === undefined || m.level === null ? ' selected' : '') + '>自动（按进度）</option>'
+    +     '<option value="1"' + (String(m.level) === '1' ? ' selected' : '') + '>1 · 轻</option>'
+    +     '<option value="2"' + (String(m.level) === '2' ? ' selected' : '') + '>2 · 中</option>'
+    +     '<option value="3"' + (String(m.level) === '3' ? ' selected' : '') + '>3 · 强</option>'
     +   '</select>'
     + '</div>'
     + '<div class="row col"><span>主标题</span>'
@@ -2564,6 +2693,8 @@ function bindEvents(){
       /* 先起表，再申请全屏/方向锁定：沉浸式请求即使卡住或失败，也不耽误计时 */
       accMs = 0;
       runStart = Date.now();
+      resetCues();
+      lastTickMinute = 0;
       setState('running');
       enterImmersive();
       requestWakeLock();
@@ -2591,6 +2722,8 @@ function bindEvents(){
     accMs = 0;
     runStart = 0;
     fired.clear();
+    resetCues();
+    lastTickMinute = -1;
     saveRun(true);
     renderControls();
     document.body.classList.remove('controls-hidden');
