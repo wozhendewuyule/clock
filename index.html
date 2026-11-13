@@ -853,6 +853,8 @@ body.far-view #updateBar{bottom:calc(env(safe-area-inset-bottom,0px) + 80px);}
       <p class="hint">会同时删除已上传的语音和背景图。</p>
     </section>
 
+    <p class="hint" id="buildTag"></p>
+
     <p class="hint">
       说明：网页切到后台或被锁屏时，系统会挂起脚本，无法保证准点响铃，回到前台会自动补一次提醒并标注「延迟触发」。
       iOS 不支持网页震动，也请确认侧面静音开关已关闭。
@@ -958,6 +960,7 @@ const DEFAULTS = {
   countdownName: '联考',
   countdownAt: '2026-11-28T08:30'
 };
+const APP_BUILD = '2026-11-14 · 03:30';
 let cfg = loadCfg();
 
 function loadCfg(){
@@ -1726,6 +1729,8 @@ function applyRemoteConfig(){
   fillForm();
   renderTicks();
   tick();
+  const bt = document.getElementById('buildTag');
+  if (bt) bt.textContent = '程序版本 ' + APP_BUILD + '（如果这里不是最新的，说明页面还没刷新）';
   setTimeout(fitMainScreen, 120);
   toast('已更新到最新配置');
 }
