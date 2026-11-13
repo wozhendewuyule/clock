@@ -413,15 +413,28 @@ body.controls-hidden #controls{opacity:0;pointer-events:none;}
 #updateBar{
   position:fixed;left:50%;transform:translateX(-50%);
   bottom:calc(env(safe-area-inset-bottom,0px) + 72px);
-  display:flex;gap:10px;align-items:center;
-  background:#111;color:#fff;padding:10px 12px 10px 16px;border-radius:14px;
-  font-size:14px;z-index:350;box-shadow:0 10px 30px rgba(0,0,0,.28);
-  white-space:nowrap;
+  display:flex;flex-direction:column;gap:8px;
+  width:min(92vw, 560px);
+  background:#111;color:#fff;padding:14px 16px;border-radius:16px;
+  font-size:14px;z-index:350;box-shadow:0 14px 40px rgba(0,0,0,.32);
 }
 #updateBar.hidden{display:none;}
+.ub-head{font-weight:600;font-size:15px;}
+.ub-list{
+  margin:0;padding:0 0 0 2px;list-style:none;
+  max-height:34vh;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  display:flex;flex-direction:column;gap:5px;
+}
+.ub-list li{
+  font-size:13px;line-height:1.45;color:#d6d6dc;
+  padding-left:12px;position:relative;
+}
+.ub-list li::before{content:'·';position:absolute;left:2px;color:#7a7a82;}
+.ub-list li em{font-style:normal;color:#8f8f98;}
+.ub-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:2px;}
 #updateBar button{
-  font-family:inherit;font-size:14px;border:0;border-radius:9px;
-  padding:8px 14px;background:#fff;color:#111;min-height:36px;
+  font-family:inherit;font-size:14px;border:0;border-radius:10px;
+  padding:9px 18px;background:#fff;color:#111;min-height:38px;
 }
 #updateBar button.ghost{background:transparent;color:#9a9aa2;}
 body.far-view #updateBar{bottom:calc(env(safe-area-inset-bottom,0px) + 80px);}
@@ -751,13 +764,16 @@ body.far-view #updateBar{bottom:calc(env(safe-area-inset-bottom,0px) + 80px);}
 
 <div id="audioLock" class="hidden">🔇 点一下屏幕以启用声音</div>
 <div id="updateBar" class="hidden">
-  <span id="updateText">有新配置</span>
-  <button type="button" id="btnApplyUpdate">更新</button>
-  <button type="button" id="btnSkipUpdate" class="ghost">保持</button>
+  <div class="ub-head" id="updateText">有新配置可用</div>
+  <ul class="ub-list" id="updateList"></ul>
+  <div class="ub-actions">
+    <button type="button" id="btnApplyUpdate">更新</button>
+    <button type="button" id="btnSkipUpdate" class="ghost">保持</button>
+  </div>
 </div>
 <div id="toast"></div>
 
-<script id="presetData">window.__PRESET__={"id":"pwa-20261113q","config":{"groups":[{"id":"g-main","name":"素描","segments":[30,45,45,60],"segmentsText":"30,45,45,60","segMeta":[{"label":"","sound":"","title":"起型","subtitle":"先把位置定住，加油！","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"铺大关系","subtitle":"明暗大胆压，别抠细节","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"揉擦","subtitle":"你得擦完是个人吧","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"进一步细化","subtitle":"画前再推远看看大关系","footer":"-S'y","autoClose":""}],"endMeta":{"label":"","sound":"","title":"考试结束","subtitle":"请各位考生有序离场","footer":"-S'y","autoClose":0}},{"id":"gmwesib3l15jl","name":"速写","segments":[30,60,30],"segmentsText":"30，60，30","segMeta":[{"label":"","sound":"","title":"起型","subtitle":"抓动态，别磨蹭","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"画人","subtitle":"大胆下笔，别描线","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"画背景","subtitle":"几笔带过，别抢主体","footer":"-S'y","autoClose":""}],"endMeta":{"label":"","sound":"","title":"速写结束","subtitle":"放下笔，退远看看","footer":"-S'y","autoClose":""}},{"id":"gmwesjmr7sxq0","name":"色彩","segments":[25,60,45,20,30],"segmentsText":"25，60，45，20，30","segMeta":[{"label":"","sound":"","title":"起型","subtitle":"加油宝贝们！","footer":"-S'y","autoClose":3},{"label":"","sound":"","title":"铺大色","subtitle":"咋样了～！","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"主体物塑造","subtitle":"该抠细节了，往实里画","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"收尾","subtitle":"快画！死手，快快快！","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"要晾干哦！","subtitle":"","footer":"-S'y","autoClose":""}],"endMeta":{"label":"","sound":"","title":"考试结束","subtitle":"请各位考生有序离场","footer":"-S'y","autoClose":0}}],"activeGroupId":"gmwesjmr7sxq0","repeat":1,"alertBaseSeconds":3,"alertTemplate":"已过 {n} 分钟","beepSound":"bell","vibrate":true,"reduceFlash":false,"title":"抬起头。","subtitle":"这一段时间已经过去了，\n剩下的不会等你。","footer":"—— 你写给自己的话","bgType":"gradient","bgColor1":"#1a0505","bgColor2":"#5c0d0d","animStyle":"typewriter","volume":0.8,"showRemain":true,"autoCloseSeconds":3,"viewMode":"normal","countdownName":"联考","countdownAt":"2026-11-28T08:30","endGentle":true},"assets":{}};</script>
+<script id="presetData">window.__PRESET__={"id":"pwa-20261113r","config":{"groups":[{"id":"g-main","name":"素描","segments":[30,45,45,60],"segmentsText":"30,45,45,60","segMeta":[{"label":"","sound":"","title":"起型","subtitle":"先把位置定住，加油！","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"铺大关系","subtitle":"明暗大胆压，别抠细节","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"揉擦","subtitle":"你得擦完是个人吧","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"进一步细化","subtitle":"画前再推远看看大关系","footer":"-S'y","autoClose":""}],"endMeta":{"label":"","sound":"","title":"考试结束","subtitle":"请各位考生有序离场","footer":"-S'y","autoClose":0}},{"id":"gmwesib3l15jl","name":"速写","segments":[30,60,30],"segmentsText":"30，60，30","segMeta":[{"label":"","sound":"","title":"起型","subtitle":"抓动态，别磨蹭","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"画人","subtitle":"大胆下笔，别描线","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"画背景","subtitle":"几笔带过，别抢主体","footer":"-S'y","autoClose":""}],"endMeta":{"label":"","sound":"","title":"速写结束","subtitle":"放下笔，退远看看","footer":"-S'y","autoClose":""}},{"id":"gmwesjmr7sxq0","name":"色彩","segments":[25,60,45,20,30],"segmentsText":"25，60，45，20，30","segMeta":[{"label":"","sound":"","title":"起型","subtitle":"加油宝贝们！","footer":"-S'y","autoClose":3},{"label":"","sound":"","title":"铺大色","subtitle":"咋样了～！","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"主体物塑造","subtitle":"该抠细节了，往实里画","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"收尾","subtitle":"快画！死手，快快快！","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"要晾干哦！","subtitle":"","footer":"-S'y","autoClose":""}],"endMeta":{"label":"","sound":"","title":"考试结束","subtitle":"请各位考生有序离场","footer":"-S'y","autoClose":0}}],"activeGroupId":"gmwesjmr7sxq0","repeat":1,"alertBaseSeconds":3,"alertTemplate":"已过 {n} 分钟","beepSound":"bell","vibrate":true,"reduceFlash":false,"title":"抬起头。","subtitle":"这一段时间已经过去了，\n剩下的不会等你。","footer":"—— 你写给自己的话","bgType":"gradient","bgColor1":"#1a0505","bgColor2":"#5c0d0d","animStyle":"typewriter","volume":0.8,"showRemain":true,"autoCloseSeconds":3,"viewMode":"normal","countdownName":"联考","countdownAt":"2026-11-28T08:30","endGentle":true},"assets":{}};</script>
 <script>
 (function(){
 'use strict';
@@ -1348,10 +1364,60 @@ function restoreRun(){
 /* 从线上 config.json 拉取已发布的配置：只提示，不自动覆盖，由用户决定 */
 let pendingRemote = null;
 
-function showUpdateBar(version){
+/* 比较当前配置与线上配置，列出具体改动 */
+function diffConfig(oldCfg, newCfg){
+  const list = [];
+  const og = (oldCfg && oldCfg.groups) || [];
+  const ng = (newCfg && newCfg.groups) || [];
+  const byName = arr => { const m = {}; arr.forEach(g => { m[g.name] = g; }); return m; };
+  const om = byName(og), nm = byName(ng);
+
+  ng.forEach(g => { if (!om[g.name]) list.push('新增组「' + g.name + '」（' + (g.segments || []).length + ' 段）'); });
+  og.forEach(g => { if (!nm[g.name]) list.push('删除组「' + g.name + '」'); });
+
+  ng.forEach(g => {
+    const o = om[g.name];
+    if (!o) return;
+    const os = (o.segments || []).join(','), ns = (g.segments || []).join(',');
+    if (os !== ns) list.push(g.name + '：分段 ' + os + ' → ' + ns);
+    const oSeg = o.segMeta || [], nSeg = g.segMeta || [];
+    const n = Math.max(oSeg.length, nSeg.length);
+    for (let i = 0; i < n; i++) {
+      const a = oSeg[i] || {}, b = nSeg[i] || {};
+      const at = a.title || '', bt = b.title || '';
+      const as = a.subtitle || '', bs = b.subtitle || '';
+      if (at !== bt) list.push(g.name + ' 第 ' + (i + 1) + ' 段 名称：' + (at || '—') + ' → ' + (bt || '—'));
+      if (as !== bs) list.push(g.name + ' 第 ' + (i + 1) + ' 段 提示语：' + (as || '—') + ' → ' + (bs || '—'));
+    }
+    const oe = o.endMeta || {}, ne = g.endMeta || {};
+    if ((oe.title || '') !== (ne.title || '')) list.push(g.name + ' 结束标题：' + (oe.title || '—') + ' → ' + (ne.title || '—'));
+    if ((oe.subtitle || '') !== (ne.subtitle || '')) list.push(g.name + ' 结束提示：' + (oe.subtitle || '—') + ' → ' + (ne.subtitle || '—'));
+  });
+
+  const cd = (a, b) => (a || '') !== (b || '');
+  if (cd(oldCfg && oldCfg.countdownName, newCfg && newCfg.countdownName) ||
+      cd(oldCfg && oldCfg.countdownAt, newCfg && newCfg.countdownAt)) {
+    list.push('倒数日：' + ((newCfg.countdownName || '') + ' ' + (newCfg.countdownAt || '')).trim());
+  }
+  if (oldCfg && newCfg && oldCfg.autoCloseSeconds !== newCfg.autoCloseSeconds) {
+    list.push('自动消失：' + (oldCfg.autoCloseSeconds || 0) + ' 秒 → ' + (newCfg.autoCloseSeconds || 0) + ' 秒');
+  }
+  return list;
+}
+
+function showUpdateBar(version, changes){
   const bar = document.getElementById('updateBar');
   const txt = document.getElementById('updateText');
-  if (txt) txt.textContent = '有新配置可用';
+  const ul = document.getElementById('updateList');
+  if (txt) txt.textContent = changes && changes.length ? '有新配置可用（' + changes.length + ' 处改动）' : '有新配置可用';
+  if (ul) {
+    ul.innerHTML = '';
+    (changes && changes.length ? changes : ['内容有更新']).forEach(c => {
+      const li = document.createElement('li');
+      li.textContent = c;
+      ul.appendChild(li);
+    });
+  }
   if (bar) bar.classList.remove('hidden');
 }
 function hideUpdateBar(){
@@ -1367,7 +1433,8 @@ async function loadRemoteConfig(){
     if (!data || !data.config || data.version === undefined) return false;
     if (localStorage.getItem('pressure-clock:remote-version') === String(data.version)) return false;
     pendingRemote = data;
-    showUpdateBar(data.version);
+    const changes = diffConfig(cfg, data.config);
+    showUpdateBar(data.version, changes);
     return true;
   } catch (e) {
     return false;
