@@ -1,6 +1,6 @@
 {
- "version": 1794582603830,
- "updatedAt": "2026/11/13 23:10:03",
+ "version": 1794590401372,
+ "updatedAt": "2026/11/14 01:20:01",
  "config": {
   "groups": [
    {
@@ -72,7 +72,8 @@
       "title": "起型",
       "subtitle": "抓动态，别磨蹭",
       "footer": "-S'y",
-      "autoClose": ""
+      "autoClose": "",
+      "voice": "voices/gmwesib3l15jl-0-1794590397562.m4a"
      },
      {
       "label": "",
