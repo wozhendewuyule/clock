@@ -1,6 +1,6 @@
 {
- "version": 1794582102866,
- "updatedAt": "2026/11/13 23:01:42",
+ "version": 1794582603830,
+ "updatedAt": "2026/11/13 23:10:03",
  "config": {
   "groups": [
    {
@@ -177,7 +177,7 @@
   "bgColor1": "#1a0505",
   "bgColor2": "#5c0d0d",
   "animStyle": "typewriter",
-  "volume": 0.8,
+  "volume": 1,
   "showRemain": true,
   "autoCloseSeconds": 3,
   "viewMode": "normal",
