@@ -173,6 +173,34 @@ body.far-view #bCountdown{
 }
 body.controls-hidden #controls{opacity:0;pointer-events:none;}
 #controls .btn{flex:0 0 auto;white-space:nowrap;padding:0 15px;}
+.btnstack{display:flex;flex-direction:column;gap:5px;flex:0 0 auto;}
+.btnstack .btn{min-height:22px;}
+.btnstack #btnBeta{min-height:34px;}
+.btn.tiny{min-height:22px;padding:0 10px;font-size:11px;border-radius:11px;letter-spacing:.02em;}
+
+/* ---------- 对比视图 ---------- */
+#compareWrap{position:fixed;inset:0;z-index:400;background:#0b0b0d;display:flex;flex-direction:column;}
+#compareWrap.hidden{display:none;}
+.cmp-bar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:8px 14px;color:#fff;font-size:13px;gap:12px;
+  background:#151518;flex:0 0 auto;
+}
+.cmp-bar b{font-weight:600;}
+.cmp-bar .tag{opacity:.55;margin-left:6px;}
+.cmp-panes{flex:1;display:flex;gap:2px;min-height:0;background:#2a2a2e;}
+.cmp-pane{flex:1;position:relative;background:#fff;min-width:0;}
+.cmp-pane iframe{width:100%;height:100%;border:0;display:block;}
+.cmp-pane .cap{
+  position:absolute;left:8px;top:8px;z-index:5;
+  background:rgba(17,17,17,.85);color:#fff;font-size:11px;
+  padding:3px 9px;border-radius:999px;pointer-events:none;
+}
+body.cmp-embed #controls,
+body.cmp-embed #updateBar,
+body.cmp-embed #cue,
+body.cmp-embed #rotateHint,
+body.cmp-embed #audioLock{display:none !important;}
 .btn{
   min-height:44px;min-width:44px;padding:0 18px;border-radius:22px;
   border:1px solid #e2e2e6;background:#fff;font-size:15px;font-weight:500;
@@ -523,7 +551,10 @@ body.far-view #updateBar{bottom:calc(env(safe-area-inset-bottom,0px) + 80px);}
   <button id="btnPrimary" class="btn primary">开始</button>
   <button id="btnReset" class="btn">重置</button>
   <button id="btnFar" class="btn ghost">远距</button>
-  <button id="btnBeta" class="btn ghost">Beta</button>
+  <div class="btnstack">
+    <button id="btnBeta" class="btn ghost">Beta</button>
+    <button id="btnCompare" class="btn tiny">对比</button>
+  </div>
   <button id="btnCheckUpdate" class="btn ghost">更新</button>
   <button id="btnSettings" class="btn ghost">设置</button>
 </div>
@@ -831,6 +862,16 @@ body.far-view #updateBar{bottom:calc(env(safe-area-inset-bottom,0px) + 80px);}
 </div>
 
 <div id="audioLock" class="hidden">🔇 点一下屏幕以启用声音</div>
+<div id="compareWrap" class="hidden">
+  <div class="cmp-bar">
+    <span><b>新旧对比</b><span class="tag">同一时刻、同一配置</span></span>
+    <button type="button" id="btnCloseCompare" class="btn tiny">关闭</button>
+  </div>
+  <div class="cmp-panes">
+    <div class="cmp-pane"><span class="cap">旧版 · Beta 关</span><iframe id="cmpOld" title="旧版"></iframe></div>
+    <div class="cmp-pane"><span class="cap">新版 · Beta 开</span><iframe id="cmpNew" title="新版"></iframe></div>
+  </div>
+</div>
 <div id="cue" class="hidden"><span id="cueText"></span></div>
 <div id="updateBar" class="hidden">
   <div class="ub-head" id="updateText">有新配置可用</div>
@@ -1377,6 +1418,8 @@ const RUN_KEY = 'pressure-clock:run:v1';
 let lastRunSave = 0;
 
 function saveRun(force){
+  /* 对比窗格是演示，不能覆盖真实进度 */
+  if (document.body.classList.contains('cmp-embed')) return;
   const now = Date.now();
   if (!force && now - lastRunSave < 1500) return;
   lastRunSave = now;
@@ -2920,6 +2963,9 @@ function bindEvents(){
     toast(cfg.pressurePack ? 'Beta 压力包已开启' : 'Beta 压力包已关闭（回到旧版行为）');
   });
 
+  $('#btnCompare').addEventListener('click', () => { openCompare(); });
+  $('#btnCloseCompare').addEventListener('click', () => { closeCompare(); });
+
   $('#btnCheckUpdate').addEventListener('click', () => { checkUpdateNow(); });
 
   window.addEventListener('resize', () => {
@@ -3250,12 +3296,60 @@ async function requestWakeLock(){
 /* =========================================================
    11. 启动
    ========================================================= */
+/* ---------- 新旧对比 ---------- */
+function compareTargetSeconds(){
+  /* 选一个「刚好要触发预警」的时间点：第一段结束前 33 秒 */
+  try {
+    const p = plan();
+    const totalMin = Math.max(1, p.totalMin);
+    const first = p.list.find(x => x.group === 1);
+    if (first) return Math.max(0, first.at * 60 - 33);
+    return Math.max(0, Math.round(totalMin * 60 * 0.6));
+  } catch (e) { return 0; }
+}
+
+function openCompare(){
+  const wrap = document.getElementById('compareWrap');
+  if (!wrap) return;
+  const at = compareTargetSeconds();
+  const bust = '&t=' + Date.now();
+  document.getElementById('cmpOld').src = '?cmp=old&at=' + at + bust;
+  document.getElementById('cmpNew').src = '?cmp=new&at=' + at + bust;
+  wrap.classList.remove('hidden');
+}
+function closeCompare(){
+  const wrap = document.getElementById('compareWrap');
+  if (!wrap) return;
+  wrap.classList.add('hidden');
+  document.getElementById('cmpOld').src = 'about:blank';
+  document.getElementById('cmpNew').src = 'about:blank';
+}
+
+/* 被当作对比窗格里加载时：按参数锁定版本与时间点 */
+function applyCompareParams(){
+  let q;
+  try { q = new URLSearchParams(location.search); } catch (e) { return false; }
+  const cmp = q.get('cmp');
+  if (!cmp) return false;
+  document.body.classList.add('cmp-embed');
+  cfg.pressurePack = (cmp === 'new');
+  const at = Number(q.get('at'));
+  if (isFinite(at) && at > 0) {
+    accMs = at * 1000;
+    runStart = Date.now();
+    setState('running');
+    resetCues();
+  }
+  return true;
+}
+
 function init(){
   /* 如果这个文件是「导出的预设」，先把配置装进去（只装一次） */
   const preset = takePreset();
   takeConfigPatch();
   takeResumeSeed();
   const resumed = restoreRun();
+  applyCompareParams();
   applyViewMode();
   /* 先绑事件、先渲染，保证即使本地存储不可用，界面也完全能用 */
   fillForm();
