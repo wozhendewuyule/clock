@@ -781,7 +781,7 @@ body.far-view #updateBar{bottom:calc(env(safe-area-inset-bottom,0px) + 80px);}
 </div>
 <div id="toast"></div>
 
-<script id="presetData">window.__PRESET__={"id":"pwa-20261113u","config":{"groups":[{"id":"g-main","name":"素描","segments":[30,45,45,60],"segmentsText":"30,45,45,60","segMeta":[{"label":"","sound":"","title":"起型","subtitle":"先把位置定住，加油！","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"铺大关系","subtitle":"明暗大胆压，别抠细节","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"揉擦","subtitle":"你得擦完是个人吧","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"进一步细化","subtitle":"画前再推远看看大关系","footer":"-S'y","autoClose":""}],"endMeta":{"label":"","sound":"","title":"考试结束","subtitle":"请各位考生有序离场","footer":"-S'y","autoClose":0}},{"id":"gmwesib3l15jl","name":"速写","segments":[30,60,30],"segmentsText":"30，60，30","segMeta":[{"label":"","sound":"","title":"起型","subtitle":"抓动态，别磨蹭","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"画人","subtitle":"大胆下笔，别描线","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"画背景","subtitle":"几笔带过，别抢主体","footer":"-S'y","autoClose":""}],"endMeta":{"label":"","sound":"","title":"速写结束","subtitle":"放下笔，退远看看","footer":"-S'y","autoClose":""}},{"id":"gmwesjmr7sxq0","name":"色彩","segments":[25,60,45,20,30],"segmentsText":"25，60，45，20，30","segMeta":[{"label":"","sound":"","title":"起型","subtitle":"加油宝贝们！","footer":"-S'y","autoClose":3},{"label":"","sound":"","title":"铺大色","subtitle":"咋样了～！","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"主体物塑造","subtitle":"该抠细节了，往实里画","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"收尾","subtitle":"快画！死手，快快快！","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"要晾干哦！","subtitle":"","footer":"-S'y","autoClose":""}],"endMeta":{"label":"","sound":"","title":"考试结束","subtitle":"请各位考生有序离场","footer":"-S'y","autoClose":0}}],"activeGroupId":"gmwesjmr7sxq0","repeat":1,"alertBaseSeconds":3,"alertTemplate":"已过 {n} 分钟","beepSound":"bell","vibrate":true,"reduceFlash":false,"title":"抬起头。","subtitle":"这一段时间已经过去了，\n剩下的不会等你。","footer":"—— 你写给自己的话","bgType":"gradient","bgColor1":"#1a0505","bgColor2":"#5c0d0d","animStyle":"typewriter","volume":0.8,"showRemain":true,"autoCloseSeconds":3,"viewMode":"normal","countdownName":"联考","countdownAt":"2026-11-28T08:30","endGentle":true},"assets":{}};</script>
+<script id="presetData">window.__PRESET__={"id":"pwa-20261113v","config":{"groups":[{"id":"g-main","name":"素描","segments":[30,45,45,60],"segmentsText":"30,45,45,60","segMeta":[{"label":"","sound":"","title":"起型","subtitle":"先把位置定住，加油！","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"铺大关系","subtitle":"明暗大胆压，别抠细节","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"揉擦","subtitle":"你得擦完是个人吧","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"进一步细化","subtitle":"画前再推远看看大关系","footer":"-S'y","autoClose":""}],"endMeta":{"label":"","sound":"","title":"考试结束","subtitle":"请各位考生有序离场","footer":"-S'y","autoClose":0}},{"id":"gmwesib3l15jl","name":"速写","segments":[30,60,30],"segmentsText":"30，60，30","segMeta":[{"label":"","sound":"","title":"起型","subtitle":"抓动态，别磨蹭","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"画人","subtitle":"大胆下笔，别描线","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"画背景","subtitle":"几笔带过，别抢主体","footer":"-S'y","autoClose":""}],"endMeta":{"label":"","sound":"","title":"速写结束","subtitle":"放下笔，退远看看","footer":"-S'y","autoClose":""}},{"id":"gmwesjmr7sxq0","name":"色彩","segments":[25,60,45,20,30],"segmentsText":"25，60，45，20，30","segMeta":[{"label":"","sound":"","title":"起型","subtitle":"加油宝贝们！","footer":"-S'y","autoClose":3},{"label":"","sound":"","title":"铺大色","subtitle":"咋样了～！","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"主体物塑造","subtitle":"该抠细节了，往实里画","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"收尾","subtitle":"快画！死手，快快快！","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"要晾干哦！","subtitle":"","footer":"-S'y","autoClose":""}],"endMeta":{"label":"","sound":"","title":"考试结束","subtitle":"请各位考生有序离场","footer":"-S'y","autoClose":0}}],"activeGroupId":"gmwesjmr7sxq0","repeat":1,"alertBaseSeconds":3,"alertTemplate":"已过 {n} 分钟","beepSound":"bell","vibrate":true,"reduceFlash":false,"title":"抬起头。","subtitle":"这一段时间已经过去了，\n剩下的不会等你。","footer":"—— 你写给自己的话","bgType":"gradient","bgColor1":"#1a0505","bgColor2":"#5c0d0d","animStyle":"typewriter","volume":0.8,"showRemain":true,"autoCloseSeconds":3,"viewMode":"normal","countdownName":"联考","countdownAt":"2026-11-28T08:30","endGentle":true},"assets":{}};</script>
 <script>
 (function(){
 'use strict';
@@ -1226,7 +1226,13 @@ async function playVoice(preferKeys){
   const tag = key + '|' + rec.name + '|' + rec.blob.size;
   if (!voiceBuf || voiceBufTag !== tag) {
     const buf = await rec.blob.arrayBuffer();
-    voiceBuf = await ctx.decodeAudioData(buf);
+    try {
+      voiceBuf = await ctx.decodeAudioData(buf);
+    } catch (e) {
+      voiceBuf = null;
+      voiceBufTag = null;
+      throw new Error('decode-failed');
+    }
     voiceBufTag = tag;
   }
   const src = ctx.createBufferSource();
@@ -2187,7 +2193,12 @@ async function syncVoiceNames(){
     const el = $('[data-vname="' + scope + '"]');
     if (!el) continue;
     const rec = await idbGet(voiceKeyOf(scope));
-    el.textContent = rec && rec.name ? rec.name : '未上传';
+    if (rec && rec.name) {
+      const kb = rec.blob ? Math.round(rec.blob.size / 1024) : 0;
+      el.textContent = rec.name + ' · ' + kb + 'KB';
+    } else {
+      el.textContent = '未上传';
+    }
   }
 }
 let demoAllRunning = false;
@@ -2303,7 +2314,9 @@ function onMetaField(ev){
 
 async function syncAssetNames(){
   const v = await idbGet('voice');
-  $('#voiceName').textContent = v && v.name ? v.name : '未上传';
+  $('#voiceName').textContent = v && v.name
+    ? (v.name + ' · ' + (v.blob ? Math.round(v.blob.size / 1024) : 0) + 'KB')
+    : '未上传';
   const b = await idbGet('bgimage');
   $('#bgName').textContent = b && b.name ? b.name : '未选择';
 }
