@@ -175,7 +175,6 @@ body.controls-hidden #controls{opacity:0;pointer-events:none;}
 #controls .btn{flex:0 0 auto;white-space:nowrap;padding:0 15px;}
 .btnstack{display:flex;flex-direction:column;gap:5px;flex:0 0 auto;}
 .btnstack .btn{min-height:22px;}
-.btnstack #btnBeta{min-height:34px;}
 .btn.tiny{min-height:22px;padding:0 10px;font-size:11px;border-radius:11px;letter-spacing:.02em;}
 
 /* ---------- 对比视图 ---------- */
@@ -551,10 +550,6 @@ body.far-view #updateBar{bottom:calc(env(safe-area-inset-bottom,0px) + 80px);}
   <button id="btnPrimary" class="btn primary">开始</button>
   <button id="btnReset" class="btn">重置</button>
   <button id="btnFar" class="btn ghost">远距</button>
-  <div class="btnstack">
-    <button id="btnBeta" class="btn ghost">Beta</button>
-    <button id="btnCompare" class="btn tiny">对比</button>
-  </div>
   <button id="btnCheckUpdate" class="btn ghost">更新</button>
   <button id="btnSettings" class="btn ghost">设置</button>
 </div>
@@ -697,7 +692,11 @@ body.far-view #updateBar{bottom:calc(env(safe-area-inset-bottom,0px) + 80px);}
       <div class="row"><span>Beta 压力包（总开关）</span>
         <input type="checkbox" data-key="pressurePack">
       </div>
-      <p class="hint">默认关闭。打开后启用：每段压力档位、段内预警、开场发令、倒数日冲刺。也可以直接点底部 Beta 按钮一键开关。</p>
+      <p class="hint">默认关闭。打开后启用：每段压力档位、段内预警、开场发令、倒数日冲刺。</p>
+      <div class="row"><span>新旧对比</span>
+        <button type="button" id="btnCompare" class="btn small">打开对比</button>
+      </div>
+      <p class="hint">左边旧版、右边新版，同时同配置并排跑。独立功能，不受 Beta 开关影响。</p>
       <div class="row"><span>段内预警（结束前提醒）</span>
         <input type="checkbox" data-key="preWarn">
       </div>
@@ -1968,8 +1967,6 @@ function renderControls(){
   else btn.textContent = '继续';
   const far = $('#btnFar');
   if (far) far.textContent = document.body.classList.contains('far-view') ? '普通' : '远距';
-  const beta = $('#btnBeta');
-  if (beta) beta.classList.toggle('on', cfg.pressurePack !== false);
 }
 
 function renderTicks(){
@@ -2960,14 +2957,6 @@ function bindEvents(){
     syncAssetNames();
   });
 
-  $('#btnBeta').addEventListener('click', () => {
-    cfg.pressurePack = (cfg.pressurePack === false);
-    saveCfg();
-    if (cfg.pressurePack === false) hideCue();
-    renderControls();
-    toast(cfg.pressurePack ? 'Beta 压力包已开启' : 'Beta 压力包已关闭（回到旧版行为）');
-  });
-
   $('#btnCompare').addEventListener('click', () => { openCompare(); });
   $('#btnCloseCompare').addEventListener('click', () => { closeCompare(); });
 
@@ -3316,6 +3305,8 @@ function compareTargetSeconds(){
 function openCompare(){
   const wrap = document.getElementById('compareWrap');
   if (!wrap) return;
+  const st = document.getElementById('settings');
+  if (st) st.classList.remove('on');
   const at = compareTargetSeconds();
   const bust = '&t=' + Date.now();
   document.getElementById('cmpOld').src = '?cmp=old&at=' + at + bust;
