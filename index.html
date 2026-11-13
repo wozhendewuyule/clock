@@ -582,6 +582,10 @@ body.far-view #updateBar{bottom:calc(env(safe-area-inset-bottom,0px) + 80px);}
 
     <section>
       <h3>分段报时（每段可单独设置）</h3>
+      <div class="row"><span>按顺序演示全部</span>
+        <button type="button" id="btnDemoAll" class="btn small">全部演示</button>
+      </div>
+      <p class="hint">从头到尾依次播一遍：每段的冲击画面、文字、音效，最后一段播完直接接整组结束。5 段大约 40~60 秒。</p>
       <div id="segList" class="seglist"></div>
       <p class="hint">点开某一段就能单独改它的报时文案、音效、文字、语音和消失时间。
         <b>音效和自动消失留空 = 跟随上一段</b>；文字留空 = 用全局默认（不会串上一段的内容）。</p>
@@ -777,7 +781,7 @@ body.far-view #updateBar{bottom:calc(env(safe-area-inset-bottom,0px) + 80px);}
 </div>
 <div id="toast"></div>
 
-<script id="presetData">window.__PRESET__={"id":"pwa-20261113t","config":{"groups":[{"id":"g-main","name":"素描","segments":[30,45,45,60],"segmentsText":"30,45,45,60","segMeta":[{"label":"","sound":"","title":"起型","subtitle":"先把位置定住，加油！","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"铺大关系","subtitle":"明暗大胆压，别抠细节","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"揉擦","subtitle":"你得擦完是个人吧","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"进一步细化","subtitle":"画前再推远看看大关系","footer":"-S'y","autoClose":""}],"endMeta":{"label":"","sound":"","title":"考试结束","subtitle":"请各位考生有序离场","footer":"-S'y","autoClose":0}},{"id":"gmwesib3l15jl","name":"速写","segments":[30,60,30],"segmentsText":"30，60，30","segMeta":[{"label":"","sound":"","title":"起型","subtitle":"抓动态，别磨蹭","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"画人","subtitle":"大胆下笔，别描线","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"画背景","subtitle":"几笔带过，别抢主体","footer":"-S'y","autoClose":""}],"endMeta":{"label":"","sound":"","title":"速写结束","subtitle":"放下笔，退远看看","footer":"-S'y","autoClose":""}},{"id":"gmwesjmr7sxq0","name":"色彩","segments":[25,60,45,20,30],"segmentsText":"25，60，45，20，30","segMeta":[{"label":"","sound":"","title":"起型","subtitle":"加油宝贝们！","footer":"-S'y","autoClose":3},{"label":"","sound":"","title":"铺大色","subtitle":"咋样了～！","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"主体物塑造","subtitle":"该抠细节了，往实里画","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"收尾","subtitle":"快画！死手，快快快！","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"要晾干哦！","subtitle":"","footer":"-S'y","autoClose":""}],"endMeta":{"label":"","sound":"","title":"考试结束","subtitle":"请各位考生有序离场","footer":"-S'y","autoClose":0}}],"activeGroupId":"gmwesjmr7sxq0","repeat":1,"alertBaseSeconds":3,"alertTemplate":"已过 {n} 分钟","beepSound":"bell","vibrate":true,"reduceFlash":false,"title":"抬起头。","subtitle":"这一段时间已经过去了，\n剩下的不会等你。","footer":"—— 你写给自己的话","bgType":"gradient","bgColor1":"#1a0505","bgColor2":"#5c0d0d","animStyle":"typewriter","volume":0.8,"showRemain":true,"autoCloseSeconds":3,"viewMode":"normal","countdownName":"联考","countdownAt":"2026-11-28T08:30","endGentle":true},"assets":{}};</script>
+<script id="presetData">window.__PRESET__={"id":"pwa-20261113u","config":{"groups":[{"id":"g-main","name":"素描","segments":[30,45,45,60],"segmentsText":"30,45,45,60","segMeta":[{"label":"","sound":"","title":"起型","subtitle":"先把位置定住，加油！","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"铺大关系","subtitle":"明暗大胆压，别抠细节","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"揉擦","subtitle":"你得擦完是个人吧","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"进一步细化","subtitle":"画前再推远看看大关系","footer":"-S'y","autoClose":""}],"endMeta":{"label":"","sound":"","title":"考试结束","subtitle":"请各位考生有序离场","footer":"-S'y","autoClose":0}},{"id":"gmwesib3l15jl","name":"速写","segments":[30,60,30],"segmentsText":"30，60，30","segMeta":[{"label":"","sound":"","title":"起型","subtitle":"抓动态，别磨蹭","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"画人","subtitle":"大胆下笔，别描线","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"画背景","subtitle":"几笔带过，别抢主体","footer":"-S'y","autoClose":""}],"endMeta":{"label":"","sound":"","title":"速写结束","subtitle":"放下笔，退远看看","footer":"-S'y","autoClose":""}},{"id":"gmwesjmr7sxq0","name":"色彩","segments":[25,60,45,20,30],"segmentsText":"25，60，45，20，30","segMeta":[{"label":"","sound":"","title":"起型","subtitle":"加油宝贝们！","footer":"-S'y","autoClose":3},{"label":"","sound":"","title":"铺大色","subtitle":"咋样了～！","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"主体物塑造","subtitle":"该抠细节了，往实里画","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"收尾","subtitle":"快画！死手，快快快！","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"要晾干哦！","subtitle":"","footer":"-S'y","autoClose":""}],"endMeta":{"label":"","sound":"","title":"考试结束","subtitle":"请各位考生有序离场","footer":"-S'y","autoClose":0}}],"activeGroupId":"gmwesjmr7sxq0","repeat":1,"alertBaseSeconds":3,"alertTemplate":"已过 {n} 分钟","beepSound":"bell","vibrate":true,"reduceFlash":false,"title":"抬起头。","subtitle":"这一段时间已经过去了，\n剩下的不会等你。","footer":"—— 你写给自己的话","bgType":"gradient","bgColor1":"#1a0505","bgColor2":"#5c0d0d","animStyle":"typewriter","volume":0.8,"showRemain":true,"autoCloseSeconds":3,"viewMode":"normal","countdownName":"联考","countdownAt":"2026-11-28T08:30","endGentle":true},"assets":{}};</script>
 <script>
 (function(){
 'use strict';
@@ -2186,6 +2190,55 @@ async function syncVoiceNames(){
     el.textContent = rec && rec.name ? rec.name : '未上传';
   }
 }
+let demoAllRunning = false;
+
+function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
+function waitUntil(fn, timeoutMs){
+  return new Promise(resolve => {
+    const t0 = Date.now();
+    const iv = setInterval(() => {
+      let ok = false;
+      try { ok = fn(); } catch (e) {}
+      if (ok || Date.now() - t0 > (timeoutMs || 10000)) { clearInterval(iv); resolve(); }
+    }, 150);
+  });
+}
+
+/* 一键演示：从第一段跑到整组结束 */
+async function demoAllStages(){
+  if (demoAllRunning) { toast('正在演示，稍等'); return; }
+  const p = plan();
+  const totalMin = Math.max(1, p.totalMin);
+  const items = p.list.filter(x => x.group === 1);
+  if (!items.length) { toast('还没有分段'); return; }
+
+  demoAllRunning = true;
+  $('#settings').classList.remove('on');
+  audioCtx();
+  toast('开始依次演示 ' + items.length + ' 段');
+  try {
+    for (let i = 0; i < items.length; i++) {
+      const it = items[i];
+      await waitUntil(() => !alertActive, 20000);          // 等上一段收尾
+      await sleep(250);
+      try {
+        fireNode({ at: it.at, len: it.len, seg: it.seg, total: it.total,
+                   group: it.group, groups: it.groups,
+                   demoRatio: it.at / totalMin }, 0);
+      } catch (e) { alertActive = false; continue; }
+
+      await waitUntil(() => alertB.classList.contains('on'), 14000);  // 等冲击结束进文字页
+      await sleep(3200);                                              // 留点时间看
+      if (alertB.classList.contains('on')) closeStageB();
+      await waitUntil(() => !alertActive, 4000);
+      await sleep(300);
+    }
+    toast('演示完毕');
+  } finally {
+    demoAllRunning = false;
+  }
+}
+
 /* 单独演示某一段 / 结束画面 */
 function demoScope(scope){
   const item = (function () {
@@ -2466,6 +2519,8 @@ function bindEvents(){
     toast('背景图已清除');
     syncAssetNames();
   });
+
+  $('#btnDemoAll').addEventListener('click', () => { demoAllStages(); });
 
   $('#btnGenCode').addEventListener('click', genCode);
   $('#btnCopyCode').addEventListener('click', copyCode);
