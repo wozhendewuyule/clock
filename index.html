@@ -870,6 +870,14 @@ body.far-view #updateBar{bottom:calc(env(safe-area-inset-bottom,0px) + 80px);}
       </div>
       <p class="hint">留空就不显示。显示成「距 联考 13天23小时58分钟」，时间过了会变成「已过」。</p>
 
+      <label class="row"><span>变橙色阈值（剩余天数）</span>
+        <input type="number" min="0" max="3650" step="1" data-key="cdSoonDays">
+      </label>
+      <label class="row"><span>变红色阈值（剩余小时）</span>
+        <input type="number" min="0" max="9999" step="1" data-key="cdUrgentHours">
+      </label>
+      <p class="hint">填 0 就是关闭对应变色。例如小时填 0，就只会变橙、永远不会变红。</p>
+
       <div class="row"><span>恢复默认设置</span>
         <button id="btnResetAll" class="btn small danger">全部清除</button>
       </div>
@@ -992,6 +1000,8 @@ const DEFAULTS = {
   tickTock: false,
   endShowCountdown: true,
   countdownName: '联考',
+  cdSoonDays: 7,
+  cdUrgentHours: 24,
   countdownAt: '2026-11-28T08:30'
 };
 const APP_BUILD = '2026-11-14 · 03:30';
@@ -1924,8 +1934,10 @@ function tick(){
     const t = new Date(cfg.countdownAt).getTime();
     if (isFinite(t)) {
       const left = t - Date.now();
-      if (left > 0 && left <= 24 * 3600 * 1000) cdClass = 'urgent';
-      else if (left > 0 && left <= 7 * 86400 * 1000) cdClass = 'soon';
+      const urgentH = clamp(Number(cfg.cdUrgentHours) || 0, 0, 9999);
+      const soonD = clamp(Number(cfg.cdSoonDays) || 0, 0, 3650);
+      if (left > 0 && urgentH > 0 && left <= urgentH * 3600 * 1000) cdClass = 'urgent';
+      else if (left > 0 && soonD > 0 && left <= soonD * 86400 * 1000) cdClass = 'soon';
     }
   }
   if (countdownEl.className !== cdClass) countdownEl.className = cdClass;
