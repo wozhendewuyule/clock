@@ -177,6 +177,22 @@ body.controls-hidden #controls{opacity:0;pointer-events:none;}
 .btnstack .btn{min-height:22px;}
 .btn.tiny{min-height:22px;padding:0 10px;font-size:11px;border-radius:11px;letter-spacing:.02em;}
 
+/* ---------- Beta 功能演示条 ---------- */
+#betaDemo{
+  position:fixed;left:50%;transform:translateX(-50%);
+  bottom:calc(env(safe-area-inset-bottom,0px) + 72px);
+  display:flex;align-items:center;gap:12px;
+  max-width:min(92vw,620px);
+  background:#111;color:#fff;padding:10px 12px 10px 18px;border-radius:14px;
+  font-size:14px;z-index:45;box-shadow:0 12px 34px rgba(0,0,0,.3);
+}
+#betaDemo.hidden{display:none;}
+#betaDemo span{line-height:1.35;}
+#betaDemo button{
+  flex:0 0 auto;font-family:inherit;font-size:13px;border:0;border-radius:9px;
+  padding:7px 13px;background:#fff;color:#111;white-space:nowrap;
+}
+
 /* ---------- 对比视图 ---------- */
 #compareWrap{position:fixed;inset:0;z-index:400;background:#0b0b0d;display:flex;flex-direction:column;}
 #compareWrap.hidden{display:none;}
@@ -697,6 +713,10 @@ body.far-view #updateBar{bottom:calc(env(safe-area-inset-bottom,0px) + 80px);}
         <button type="button" id="btnCompare" class="btn small">打开对比</button>
       </div>
       <p class="hint">左边旧版、右边新版，同时同配置并排跑。独立功能，不受 Beta 开关影响。</p>
+      <div class="row"><span>Beta 功能演示</span>
+        <button type="button" id="btnBetaDemo" class="btn small">开始演示</button>
+      </div>
+      <p class="hint">依次走一遍：开场发令 → 段内预警 → 倒数日冲刺 → 压力档位。约 20 秒。</p>
       <div class="row"><span>段内预警（结束前提醒）</span>
         <input type="checkbox" data-key="preWarn">
       </div>
@@ -863,6 +883,10 @@ body.far-view #updateBar{bottom:calc(env(safe-area-inset-bottom,0px) + 80px);}
 </div>
 
 <div id="audioLock" class="hidden">🔇 点一下屏幕以启用声音</div>
+<div id="betaDemo" class="hidden">
+  <span id="betaDemoStep">Beta 演示</span>
+  <button type="button" id="btnExitBetaDemo">退出</button>
+</div>
 <div id="compareWrap" class="hidden">
   <div class="cmp-bar">
     <span><b>新旧对比</b><span class="tag">同一时刻、同一配置</span></span>
@@ -2127,7 +2151,7 @@ function fireNode(item, lateMs){
   /* 演示时按「那一段所处的时间点」算强度，不然永远是第一档 */
   const ratio = clamp(item && item.demoRatio != null ? item.demoRatio : (e / spanMs), 0, 1);
   /* 段自定义档位优先，其次按进度自动判断 */
-  const level = clamp((cfg.pressurePack !== false && prof.levelOverride) || levelFor(ratio), 1, 3);
+  const level = clamp(demoLevelOverride || (cfg.pressurePack !== false && prof.levelOverride) || levelFor(ratio), 1, 3);
 
   const base = clamp(Number(cfg.alertBaseSeconds) || 3, 0.5, 12);
   const durMs = base * 1000 * LEVEL_MULT[level - 1];
@@ -2958,6 +2982,8 @@ function bindEvents(){
   });
 
   $('#btnCompare').addEventListener('click', () => { openCompare(); });
+  $('#btnBetaDemo').addEventListener('click', () => { startBetaDemo(); });
+  $('#btnExitBetaDemo').addEventListener('click', () => { stopBetaDemo(); });
   $('#btnCloseCompare').addEventListener('click', () => { closeCompare(); });
 
   $('#btnCheckUpdate').addEventListener('click', () => { checkUpdateNow(); });
@@ -3290,6 +3316,81 @@ async function requestWakeLock(){
 /* =========================================================
    11. 启动
    ========================================================= */
+/* ---------- Beta 功能演示 ---------- */
+let betaDemoTimers = [];
+let betaDemoSavedAt = null;
+let demoLevelOverride = 0;
+
+function clearBetaDemo(){
+  betaDemoTimers.forEach(t => clearTimeout(t));
+  betaDemoTimers = [];
+  if (betaDemoSavedAt !== null) { cfg.countdownAt = betaDemoSavedAt; betaDemoSavedAt = null; }
+}
+
+function betaDemoStep(text){
+  const el = document.getElementById('betaDemoStep');
+  if (el) el.textContent = text;
+}
+
+function stopBetaDemo(){
+  clearBetaDemo();
+  demoLevelOverride = 0;
+  const panel = document.getElementById('betaDemo');
+  if (panel) panel.classList.add('hidden');
+  hideCue();
+}
+
+function startBetaDemo(){
+  clearBetaDemo();
+  const panel = document.getElementById('betaDemo');
+  if (!panel) return;
+
+  const st = document.getElementById('settings');
+  if (st) st.classList.remove('on');
+  if (cfg.pressurePack === false) { cfg.pressurePack = true; saveCfg(); }
+  panel.classList.remove('hidden');
+
+  const g = activeGroup();
+  const name = segNameAt(0);
+  const total = (g.segments || []).length;
+  const at = (t, fn) => betaDemoTimers.push(setTimeout(fn, t));
+
+  betaDemoStep('① 开场发令：每段开始时告诉你进入哪一段');
+  at(150, () => showCue('第 1/' + total + ' 段 · ' + name, '', 2300));
+
+  at(3200, () => {
+    betaDemoStep('② 段内预警：结束前 3 分钟轻提醒，不刷红屏');
+    showCue('本段还剩 3 分钟', 'warn', 2400);
+  });
+
+  at(6400, () => {
+    betaDemoStep('③ 最后 30 秒再提醒一次');
+    showCue('最后 30 秒', 'warn', 2400);
+  });
+
+  at(9600, () => {
+    betaDemoStep('④ 倒数日冲刺：7 天内变橙，24 小时内变红');
+    betaDemoSavedAt = cfg.countdownAt;
+    const d = new Date(Date.now() + 11 * 3600 * 1000);
+    const p2 = x => String(x).padStart(2, '0');
+    cfg.countdownAt = d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate()) +
+                      'T' + p2(d.getHours()) + ':' + p2(d.getMinutes());
+  });
+
+  at(14500, () => {
+    if (betaDemoSavedAt !== null) { cfg.countdownAt = betaDemoSavedAt; betaDemoSavedAt = null; }
+    betaDemoStep('⑤ 压力档位：这一段到点时的真实强度（强档演示）');
+    demoLevelOverride = 3;
+    try { demoScope('seg:1'); } catch (e) {}
+    betaDemoTimers.push(setTimeout(() => { demoLevelOverride = 0; }, 60));
+  });
+
+  at(21000, () => {
+    betaDemoStep('演示结束 · 点报时页的「继续」即可关闭');
+    betaDemoTimers.push(setTimeout(stopBetaDemo, 4000));
+  });
+}
+
 /* ---------- 新旧对比 ---------- */
 function compareTargetSeconds(){
   /* 选一个「刚好要触发预警」的时间点：第一段结束前 33 秒 */
