@@ -1,6 +1,6 @@
 /* 美术生的倒计时 · Service Worker
    策略：页面走「网络优先」，拿不到网就回落到缓存 —— 既能离线用，又能每次联网拿到最新版。 */
-const VERSION = 'sc-v2';
+const VERSION = 'sc-v3';
 const SHELL = './index.html';
 
 self.addEventListener('install', e => {
