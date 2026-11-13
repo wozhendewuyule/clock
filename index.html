@@ -425,6 +425,8 @@ body.cmp-embed #audioLock{display:none !important;}
   color:#8a8a92;font-variant-numeric:tabular-nums;
   min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
 }
+#farCountdown.soon{color:#c2410c;font-weight:600;}
+#farCountdown.urgent{color:#e00000;font-weight:700;}
 #farChip{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .groupbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
 .gchip{
@@ -1965,6 +1967,7 @@ function tick(){
     }
   }
   if (countdownEl.className !== cdClass) countdownEl.className = cdClass;
+  if (farCountdownEl && farCountdownEl.className !== cdClass) farCountdownEl.className = cdClass;
   const totalMin = Math.max(1, p.totalMin);
   const spanMs = totalMin * 60000;
   const e = elapsedMs();
