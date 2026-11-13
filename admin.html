@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>后台 · 美术生的倒计时</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;}
+body{
+  margin:0;background:#f5f5f7;color:#111;
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Noto Sans SC",system-ui,sans-serif;
+  font-size:15px;line-height:1.55;
+  padding-bottom:80px;
+}
+header{
+  position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid #e5e5e9;
+  padding:12px 18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+}
+header h1{font-size:16px;margin:0;font-weight:600;flex:1;}
+button{
+  font-family:inherit;font-size:14px;min-height:36px;padding:0 14px;border-radius:9px;
+  border:1px solid #d8d8de;background:#fff;color:#111;cursor:pointer;
+}
+button.primary{background:#111;color:#fff;border-color:#111;}
+button.danger{color:#d00;border-color:#f0c8c8;}
+button:active{transform:scale(.98);}
+section{background:#fff;margin:14px 18px;border-radius:14px;padding:16px;border:1px solid #e9e9ee;}
+h2{font-size:13px;color:#8a8a92;margin:0 0 12px;font-weight:600;letter-spacing:.06em;}
+label{display:block;font-size:13px;color:#55555e;margin:10px 0 4px;}
+input[type=text],input[type=password],input[type=number],input[type=datetime-local],select,textarea{
+  width:100%;font-family:inherit;font-size:15px;padding:9px 11px;
+  border:1px solid #d8d8de;border-radius:9px;background:#fff;color:#111;
+}
+textarea{min-height:62px;resize:vertical;}
+.row{display:flex;gap:10px;align-items:center;}
+.row > *{flex:1;}
+.hint{font-size:12px;color:#9a9aa2;margin:8px 0 0;}
+.group{border:1px solid #e5e5e9;border-radius:12px;padding:12px;margin-bottom:12px;background:#fafafc;}
+.group h3{margin:0 0 8px;font-size:15px;display:flex;gap:10px;align-items:center;}
+.group h3 span{flex:1;}
+.seg{border-top:1px dashed #e2e2e8;padding-top:8px;margin-top:8px;}
+.seg .t{font-size:12px;color:#8a8a92;margin-bottom:4px;}
+.seg .row{margin-bottom:6px;}
+.footer{
+  position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid #e5e5e9;
+  padding:10px 18px;display:flex;gap:10px;align-items:center;
+  padding-bottom:calc(10px + env(safe-area-inset-bottom));
+}
+.footer .status{flex:1;font-size:13px;color:#6a6a72;}
+.footer .status.err{color:#d00;}
+.footer .status.ok{color:#0a7d32;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>后台 · 美术生的倒计时</h1>
+  <a href="./index.html" target="_blank"><button type="button">打开前台</button></a>
+</header>
+
+<section id="tokenBox">
+  <h2>发布凭证</h2>
+  <label>GitHub Token（只存这台设备，不会上传）</label>
+  <input type="password" id="token" placeholder="github_pat_..." />
+  <div class="row" style="margin-top:10px">
+    <button type="button" id="btnSaveToken">保存到本机</button>
+    <button type="button" id="btnClearToken" class="danger">清除</button>
+  </div>
+  <p class="hint" id="tokenState">未设置 token，只能编辑和预览，不能发布。</p>
+</section>
+
+<section>
+  <h2>倒数日</h2>
+  <div class="row">
+    <div>
+      <label>名称</label>
+      <input type="text" id="cdName" placeholder="如 联考" />
+    </div>
+    <div>
+      <label>日期时间</label>
+      <input type="datetime-local" id="cdAt" />
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>组</h2>
+  <div id="groups"></div>
+  <button type="button" id="btnAddGroup">＋ 新增一组</button>
+</section>
+
+<section>
+  <h2>全局</h2>
+  <div class="row">
+    <div>
+      <label>自动消失（秒，0 = 手动）</label>
+      <input type="number" id="autoClose" min="0" max="600" />
+    </div>
+    <div>
+      <label>音量</label>
+      <input type="number" id="volume" min="0" max="1" step="0.05" />
+    </div>
+  </div>
+  <label>报时音效</label>
+  <select id="beep">
+    <option value="bell">铃音</option>
+    <option value="chime">钟声</option>
+    <option value="beep">电子</option>
+    <option value="none">静音</option>
+  </select>
+  <label><input type="checkbox" id="endGentle" style="width:auto;margin-right:8px" />整组结束不闪不震（温和收尾）</label>
+</section>
+
+<div class="footer">
+  <div class="status" id="status">就绪</div>
+  <button type="button" id="btnLoad">读取线上</button>
+  <button type="button" id="btnPublish" class="primary">发布</button>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  const REPO = 'wozhendewuyule/clock';
+  const BRANCH = 'main';
+  const BRANCH_PATH = 'config.json';
+  const TOKEN_KEY = 'admin-token-v1';
+
+  const $ = s => document.querySelector(s);
+  const status = (msg, kind) => {
+    const el = $('#status');
+    el.textContent = msg;
+    el.className = 'status' + (kind ? ' ' + kind : '');
+  };
+
+  let cfg = null;
+
+  function blankSeg(){ return { label:'', sound:'', title:'', subtitle:'', footer:'', autoClose:'' }; }
+  function newId(){ return 'g' + Date.now().toString(36) + Math.random().toString(36).slice(2,5); }
+
+  function defaultCfg(){
+    return {
+      groups: [{
+        id: newId(), name: '新组', segments: [30,30,30], segmentsText: '30,30,30',
+        segMeta: [blankSeg(), blankSeg(), blankSeg()],
+        endMeta: blankSeg()
+      }],
+      activeGroupId: '',
+      repeat: 1, alertBaseSeconds: 3, alertTemplate: '已过 {n} 分钟',
+      beepSound: 'bell', vibrate: true, reduceFlash: false,
+      title: '抬起头。', subtitle: '这一段时间已经过去了。', footer: "—— 你写给自己的话",
+      bgType: 'gradient', bgColor1: '#1a0505', bgColor2: '#5c0d0d',
+      animStyle: 'typewriter', volume: 0.8, showRemain: true,
+      autoCloseSeconds: 3, viewMode: 'normal', pressureEdge: false,
+      soundRepeat: 0, soundInterval: 0, endGentle: true,
+      countdownName: '', countdownAt: ''
+    };
+  }
+
+  function normalize(g){
+    if (!g.id) g.id = newId();
+    if (!Array.isArray(g.segments) || !g.segments.length) g.segments = [30];
+    if (!Array.isArray(g.segMeta)) g.segMeta = [];
+    while (g.segMeta.length < g.segments.length) g.segMeta.push(blankSeg());
+    if (g.segMeta.length > g.segments.length) g.segMeta.length = g.segments.length;
+    if (!g.endMeta) g.endMeta = blankSeg();
+    return g;
+  }
+
+  /* ---------- 渲染 ---------- */
+  function render(){
+    $('#cdName').value = cfg.countdownName || '';
+    $('#cdAt').value = cfg.countdownAt || '';
+    $('#autoClose').value = cfg.autoCloseSeconds ?? 0;
+    $('#volume').value = cfg.volume ?? 0.8;
+    $('#beep').value = cfg.beepSound || 'bell';
+    $('#endGentle').checked = cfg.endGentle !== false;
+
+    const wrap = $('#groups');
+    wrap.innerHTML = '';
+    cfg.groups.forEach((g, gi) => {
+      normalize(g);
+      const card = document.createElement('div');
+      card.className = 'group';
+      card.innerHTML =
+        '<h3><span>第 ' + (gi + 1) + ' 组</span>' +
+        '<button type="button" class="danger" data-del="' + gi + '">删除</button></h3>' +
+        '<label>组名</label><input type="text" data-g="' + gi + '" data-f="name" value="' + esc(g.name) + '">' +
+        '<label>分段（分钟，逗号分隔）</label><input type="text" data-g="' + gi + '" data-f="segmentsText" value="' + esc(g.segmentsText || g.segments.join(',')) + '">' +
+        '<p class="hint">合计 ' + g.segments.reduce((a, b) => a + b, 0) + ' 分钟 · 共 ' + g.segments.length + ' 段</p>' +
+        g.segments.map((len, si) =>
+          '<div class="seg"><div class="t">第 ' + (si + 1) + ' 段 · ' + len + ' 分钟' +
+          (g.segMeta[si].title ? '' : ' · 未命名') + '</div>' +
+          '<div class="row">' +
+            '<input type="text" data-g="' + gi + '" data-s="' + si + '" data-f="title" placeholder="段名，如 起型" value="' + esc(g.segMeta[si].title) + '">' +
+            '<input type="text" data-g="' + gi + '" data-s="' + si + '" data-f="subtitle" placeholder="副标题（可空）" value="' + esc(g.segMeta[si].subtitle) + '">' +
+          '</div></div>'
+        ).join('') +
+        '<div class="seg"><div class="t">整组结束</div><div class="row">' +
+          '<input type="text" data-g="' + gi + '" data-e="1" data-f="title" placeholder="结束标题" value="' + esc(g.endMeta.title) + '">' +
+          '<input type="text" data-g="' + gi + '" data-e="1" data-f="subtitle" placeholder="结束副标题" value="' + esc(g.endMeta.subtitle) + '">' +
+        '</div></div>';
+      wrap.appendChild(card);
+    });
+  }
+
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  }
+
+  /* ---------- 交互 ---------- */
+  document.addEventListener('input', e => {
+    const el = e.target;
+    const gi = el.dataset.g;
+    if (gi === undefined) {
+      // 全局字段
+      if (el.id === 'cdName') cfg.countdownName = el.value;
+      if (el.id === 'cdAt') cfg.countdownAt = el.value;
+      if (el.id === 'autoClose') cfg.autoCloseSeconds = Number(el.value) || 0;
+      if (el.id === 'volume') cfg.volume = Number(el.value) || 0;
+      if (el.id === 'beep') cfg.beepSound = el.value;
+      if (el.id === 'endGentle') cfg.endGentle = el.checked;
+      return;
+    }
+    const g = cfg.groups[Number(gi)];
+    if (!g) return;
+    const f = el.dataset.f;
+    if (el.dataset.s !== undefined) {
+      g.segMeta[Number(el.dataset.s)][f] = el.value;
+    } else if (el.dataset.e) {
+      g.endMeta[f] = el.value;
+    } else if (f === 'segmentsText') {
+      g.segmentsText = el.value;
+      const arr = el.value.split(/[,，、\s]+/).map(x => Math.round(Number(x))).filter(n => n > 0);
+      if (arr.length) { g.segments = arr; normalize(g); }
+    } else if (f === 'name') {
+      g.name = el.value;
+    }
+  });
+
+  document.addEventListener('change', e => {
+    if (e.target.dataset && e.target.dataset.f === 'segmentsText') render();
+  });
+
+  document.addEventListener('click', e => {
+    const del = e.target.closest('[data-del]');
+    if (del) {
+      const i = Number(del.dataset.del);
+      if (cfg.groups.length <= 1) { status('至少保留一组', 'err'); return; }
+      if (!confirm('删除「' + cfg.groups[i].name + '」？')) return;
+      cfg.groups.splice(i, 1);
+      render();
+      return;
+    }
+  });
+
+  $('#btnAddGroup').addEventListener('click', () => {
+    const g = normalize({
+      id: newId(), name: '新组 ' + (cfg.groups.length + 1),
+      segments: [30, 30, 30], segmentsText: '30,30,30',
+      segMeta: [blankSeg(), blankSeg(), blankSeg()], endMeta: blankSeg()
+    });
+    cfg.groups.push(g);
+    render();
+  });
+
+  /* ---------- token ---------- */
+  function loadToken(){
+    const t = localStorage.getItem(TOKEN_KEY) || '';
+    $('#token').value = t ? '••••••••' + t.slice(-6) : '';
+    $('#tokenState').textContent = t
+      ? '已设置 token（末尾 ' + t.slice(-6) + '），可以发布。'
+      : '未设置 token，只能编辑和预览，不能发布。';
+    return t;
+  }
+  $('#btnSaveToken').addEventListener('click', () => {
+    const v = $('#token').value.trim();
+    if (!v || v.indexOf('••') === 0) { status('请粘贴完整的 token', 'err'); return; }
+    localStorage.setItem(TOKEN_KEY, v);
+    loadToken();
+    status('token 已保存在本机', 'ok');
+  });
+  $('#btnClearToken').addEventListener('click', () => {
+    localStorage.removeItem(TOKEN_KEY);
+    $('#token').value = '';
+    loadToken();
+    status('已清除 token');
+  });
+
+  /* ---------- 读取 / 发布 ---------- */
+  function collect(){
+    const out = JSON.parse(JSON.stringify(cfg));
+    out.groups.forEach(normalize);
+    if (!out.activeGroupId || !out.groups.some(g => g.id === out.activeGroupId)) {
+      out.activeGroupId = out.groups[0].id;
+    }
+    return out;
+  }
+
+  async function loadRemote(){
+    status('读取中…');
+    try {
+      const r = await fetch('./config.json?t=' + Date.now(), { cache: 'no-store' });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const d = await r.json();
+      cfg = d.config;
+      cfg.groups = (cfg.groups || []).map(normalize);
+      render();
+      status('已读取线上版本（version ' + d.version + '）', 'ok');
+    } catch (err) {
+      cfg = cfg || defaultCfg();
+      render();
+      status('读取失败：' + err.message, 'err');
+    }
+  }
+
+  async function publish(){
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (!token) { status('先设置 token 才能发布', 'err'); return; }
+    status('发布中…');
+    const payload = {
+      version: Date.now(),
+      updatedAt: new Date().toLocaleString('zh-CN'),
+      config: collect()
+    };
+    const api = 'https://api.github.com/repos/' + REPO + '/contents/' + BRANCH_PATH;
+    const headers = {
+      'Authorization': 'Bearer ' + token,
+      'Accept': 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28'
+    };
+    try {
+      let sha = null;
+      const g = await fetch(api + '?ref=' + BRANCH, { headers });
+      if (g.ok) { const j = await g.json(); sha = j.sha; }
+      const body = {
+        message: 'publish config ' + payload.version,
+        content: btoa(unescape(encodeURIComponent(JSON.stringify(payload, null, 1)))),
+        branch: BRANCH
+      };
+      if (sha) body.sha = sha;
+      const r = await fetch(api, {
+        method: 'PUT',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, headers),
+        body: JSON.stringify(body)
+      });
+      if (!r.ok) {
+        const t = await r.text();
+        throw new Error('HTTP ' + r.status + ' ' + t.slice(0, 120));
+      }
+      status('✓ 已发布（version ' + payload.version + '）。手机刷新即可看到，可能需要 1 分钟生效。', 'ok');
+    } catch (err) {
+      status('发布失败：' + err.message, 'err');
+    }
+  }
+
+  $('#btnLoad').addEventListener('click', loadRemote);
+  $('#btnPublish').addEventListener('click', publish);
+
+  /* ---------- 启动 ---------- */
+  cfg = defaultCfg();
+  render();
+  loadToken();
+  loadRemote();
+})();
+</script>
+</body>
+</html>
