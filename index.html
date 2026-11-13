@@ -694,6 +694,10 @@ body.controls-hidden #controls{opacity:0;pointer-events:none;}
       <div class="row"><span>显示剩余时间</span>
         <input type="checkbox" data-key="showRemain">
       </div>
+      <div class="row"><span>整组结束不闪不震</span>
+        <input type="checkbox" data-key="endGentle">
+      </div>
+      <p class="hint">开启后，最后一组的结束提醒不刷红屏、不抖动、不震动，只轻轻响一声后直接显示结束画面。</p>
       <div class="row"><span>四边泛红压迫感</span>
         <input type="checkbox" data-key="pressureEdge">
       </div>
@@ -723,8 +727,8 @@ body.controls-hidden #controls{opacity:0;pointer-events:none;}
 <div id="audioLock" class="hidden">🔇 点一下屏幕以启用声音</div>
 <div id="toast"></div>
 
-<script id="presetData">window.__PRESET__={"id":"pwa-20261113h","config":{"groups":[{"id":"g-main","name":"素描","segments":[30,45,45,30,30],"segmentsText":"30，45，45，30，30","segMeta":[{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""},{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""},{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""},{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""},{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""}],"endMeta":{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""}},{"id":"gmwesib3l15jl","name":"速写","segments":[30,60,30],"segmentsText":"30，60，30","segMeta":[{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""},{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""},{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""}],"endMeta":{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""}},{"id":"gmwesjmr7sxq0","name":"色彩","segments":[25,60,45,20,30],"segmentsText":"25，60，45，20，30","segMeta":[{"label":"","sound":"","title":"起型","subtitle":"加油宝贝们！","footer":"-S'y","autoClose":3},{"label":"","sound":"","title":"铺大色","subtitle":"咋样了～！","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"主体物塑造","subtitle":"该抠细节了，往实里画","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"收尾","subtitle":"快画！死手，快快快！","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"要晾干哦！","subtitle":"","footer":"-S'y","autoClose":""}],"endMeta":{"label":"","sound":"","title":"考试结束","subtitle":"请各位考生有序离场","footer":"-S'y","autoClose":0}}],"activeGroupId":"gmwesjmr7sxq0","repeat":1,"alertBaseSeconds":3,"alertTemplate":"已过 {n} 分钟","beepSound":"bell","vibrate":true,"reduceFlash":false,"title":"抬起头。","subtitle":"这一段时间已经过去了，\n剩下的不会等你。","footer":"—— 你写给自己的话","bgType":"gradient","bgColor1":"#1a0505","bgColor2":"#5c0d0d","animStyle":"typewriter","volume":0.8,"showRemain":true,"autoCloseSeconds":3,"viewMode":"normal","countdownName":"联考","countdownAt":"2026-11-28T08:30"},"assets":{}};</script>
-<script id="configPatch">window.__PATCH__={id:'patch-shaping-20261113',apply:function(cfg){cfg.viewMode='normal';cfg.countdownName='联考';cfg.countdownAt='2026-11-28T08:30';var g=(cfg.groups||[]).filter(function(x){return x.name==='色彩'||x.name==='芲彩';})[0];if(g&&g.segMeta&&g.segMeta[2]){g.segMeta[2].subtitle='该抠细节了，往实里画';}}};</script>
+<script id="presetData">window.__PRESET__={"id":"pwa-20261113i","config":{"groups":[{"id":"g-main","name":"素描","segments":[30,45,45,30,30],"segmentsText":"30，45，45，30，30","segMeta":[{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""},{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""},{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""},{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""},{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""}],"endMeta":{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""}},{"id":"gmwesib3l15jl","name":"速写","segments":[30,60,30],"segmentsText":"30，60，30","segMeta":[{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""},{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""},{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""}],"endMeta":{"label":"","sound":"","title":"","subtitle":"","footer":"","autoClose":""}},{"id":"gmwesjmr7sxq0","name":"色彩","segments":[25,60,45,20,30],"segmentsText":"25，60，45，20，30","segMeta":[{"label":"","sound":"","title":"起型","subtitle":"加油宝贝们！","footer":"-S'y","autoClose":3},{"label":"","sound":"","title":"铺大色","subtitle":"咋样了～！","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"主体物塑造","subtitle":"该抠细节了，往实里画","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"收尾","subtitle":"快画！死手，快快快！","footer":"-S'y","autoClose":""},{"label":"","sound":"","title":"要晾干哦！","subtitle":"","footer":"-S'y","autoClose":""}],"endMeta":{"label":"","sound":"","title":"考试结束","subtitle":"请各位考生有序离场","footer":"-S'y","autoClose":0}}],"activeGroupId":"gmwesjmr7sxq0","repeat":1,"alertBaseSeconds":3,"alertTemplate":"已过 {n} 分钟","beepSound":"bell","vibrate":true,"reduceFlash":false,"title":"抬起头。","subtitle":"这一段时间已经过去了，\n剩下的不会等你。","footer":"—— 你写给自己的话","bgType":"gradient","bgColor1":"#1a0505","bgColor2":"#5c0d0d","animStyle":"typewriter","volume":0.8,"showRemain":true,"autoCloseSeconds":3,"viewMode":"normal","countdownName":"联考","countdownAt":"2026-11-28T08:30","endGentle":true},"assets":{}};</script>
+<script id="configPatch">window.__PATCH__={id:'patch-gentle-20261113',apply:function(cfg){cfg.viewMode='normal';cfg.endGentle=true;cfg.countdownName='联考';cfg.countdownAt='2026-11-28T08:30';var g=(cfg.groups||[]).filter(function(x){return x.name==='色彩'||x.name==='芲彩';})[0];if(g&&g.segMeta&&g.segMeta[2]){g.segMeta[2].subtitle='该抠细节了，往实里画';}}};</script>
 <script>
 (function(){
 'use strict';
@@ -788,6 +792,7 @@ const DEFAULTS = {
   pressureEdge: false,
   soundRepeat: 0,
   soundInterval: 0,
+  endGentle: true,
   countdownName: '联考',
   countdownAt: '2026-11-28T08:30'
 };
@@ -1620,9 +1625,35 @@ function stopFlash(){
   alertA.classList.remove('flash-on');
 }
 
+/* 温和收尾：两下单音，不带低频冲击 */
+function playGentle(){
+  const ctx = audioCtx();
+  if (!ctx) return;
+  const out = ctx.createGain();
+  out.gain.value = clamp(Number(cfg.volume) || 0, 0, 1) * 0.75;
+  out.connect(ctx.destination);
+  [659.25, 987.77].forEach((f, i) => {
+    tone(ctx, out, { freq: f, start: i * 0.17, dur: 1.5, peak: 0.16 });
+  });
+}
+
 function fireNode(item, lateMs){
   if (alertActive) return;
   alertActive = true;
+
+  const prof = profileFor(item);
+
+  /* 整组结束走温和模式：不闪不震，轻响一声直接进结束画面 */
+  if (prof.isEnd && cfg.endGentle !== false) {
+    alertA.className = 'layer';
+    alertB.classList.remove('on');
+    document.body.classList.add('controls-hidden');
+    playGentle();
+    if (!audioUnlocked) showAudioLock();
+    clearTimeout(alertTimer);
+    alertTimer = setTimeout(() => showStageB(item, 1), 900);
+    return;
+  }
 
   const e = elapsedMs();
   const p = plan();
@@ -1636,7 +1667,6 @@ function fireNode(item, lateMs){
   /* 组装 A 层 */
   alertB.classList.remove('on');
   alertA.className = 'layer level-' + level + (cfg.reduceFlash ? ' no-flash' : '');
-  const prof = profileFor(item);
   alertALabel.innerHTML = labelHtml(item, prof.label);
   lateBadge.classList.toggle('hidden', !(lateMs > 15000));
   const n0 = new Date();
