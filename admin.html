@@ -140,6 +140,7 @@ textarea{min-height:62px;resize:vertical;}
     <button type="button" id="btnCtlAlert">全体报时</button>
   </div>
   <p class="hint" id="ctlState">尚未下发指令</p>
+  <p class="hint">⏱ 指令大约 <b>30～60 秒</b> 后学生端才会响应（GitHub 缓存限制）。建议开考前 1 分钟点「全体开始」。</p>
   <div class="row">
     <label style="flex:1;margin:0">在线设备（最近 2 分钟）</label>
     <strong id="onlineCount" style="flex:1;font-size:20px">—</strong>
@@ -538,7 +539,8 @@ textarea{min-height:62px;resize:vertical;}
     try {
       await putFile('control.json', payload, 'control ' + cmd + ' ' + payload.at);
       const names = { start: '开始', pause: '暂停', reset: '重置', alert: '报时' };
-      ctlMsg('✓ 已下发「' + (names[cmd] || cmd) + '」· ' + new Date().toLocaleTimeString('zh-CN') + ' · 所有设备');
+      ctlMsg('✓ 已下发「' + (names[cmd] || cmd) + '」· ' + new Date().toLocaleTimeString('zh-CN') +
+        ' · 学生端约 30~60 秒内响应');
       status('指令已下发', 'ok');
     } catch (err) {
       ctlMsg('✗ 下发失败：' + err.message, true);
