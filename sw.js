@@ -1,6 +1,6 @@
 /* 美术生的倒计时 · Service Worker
    策略：页面走「网络优先」，拿不到网就回落到缓存 —— 既能离线用，又能每次联网拿到最新版。 */
-const VERSION = 'sc-v4';
+const VERSION = 'sc-v5';
 const SHELL = './index.html';
 
 self.addEventListener('install', e => {
@@ -23,6 +23,8 @@ self.addEventListener('fetch', e => {
   /* 配置、集控指令、识别码配置都必须走网络，
      否则后台发布/下发后，设备永远拿到的都是第一次的缓存 */
   const u = new URL(req.url);
+  /* 跨域请求（例如在线心跳）一律不接管，交给浏览器 */
+  if (u.origin !== self.location.origin) return;
   const dynamic = /(config|control)\.json$/i.test(u.pathname) ||
                   u.pathname.indexOf('/codes/') >= 0;
   if (dynamic) {
