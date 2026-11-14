@@ -140,6 +140,12 @@ textarea{min-height:62px;resize:vertical;}
     <button type="button" id="btnCtlAlert">全体报时</button>
   </div>
   <p class="hint" id="ctlState">尚未下发指令</p>
+  <div class="row">
+    <label style="flex:1;margin:0">在线设备（最近 2 分钟）</label>
+    <strong id="onlineCount" style="flex:1;font-size:20px">—</strong>
+    <button type="button" id="btnRefreshOnline" style="flex:0 0 auto">刷新</button>
+  </div>
+  <p class="hint">学生端每分钟上报一次「有多少台在」，这里取最近两分钟的最大值。不含任何设备信息。</p>
 </section>
 
 <section>
@@ -570,6 +576,32 @@ textarea{min-height:62px;resize:vertical;}
       status('下发失败：' + err.message, 'err');
     }
   }
+
+  const HB_BASE = 'https://abacus.jasoncameron.dev';
+  const HB_NS = 'msdshui-clock';
+
+  async function refreshOnline(){
+    const out = document.getElementById('onlineCount');
+    if (!out) return;
+    const code = normCode(ACCESS_CODE) || 'default';
+    const bucket = Math.floor(Date.now() / 60000);
+    const keys = [bucket, bucket - 1];
+    let best = 0;
+    let ok = false;
+    for (const b of keys) {
+      try {
+        const r = await fetch(HB_BASE + '/get/' + HB_NS + '/' + encodeURIComponent(code + '-' + b), { cache: 'no-store' });
+        if (!r.ok) continue;
+        const d = await r.json();
+        if (typeof d.value === 'number') { ok = true; best = Math.max(best, d.value); }
+      } catch (e) {}
+    }
+    out.textContent = ok ? (best + ' 台') : '—';
+  }
+
+  $('#btnRefreshOnline').addEventListener('click', refreshOnline);
+  setInterval(refreshOnline, 15000);
+  refreshOnline();
 
   $('#btnCtlStart').addEventListener('click', () => sendControl('start'));
   $('#btnCtlPause').addEventListener('click', () => sendControl('pause'));
