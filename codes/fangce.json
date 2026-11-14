@@ -1,6 +1,6 @@
 {
- "version": 1794640234069,
- "updatedAt": "2026/11/14 15:10:34",
+ "version": 1794648915889,
+ "updatedAt": "2026/11/14 17:35:15",
  "config": {
   "groups": [
    {
@@ -20,7 +20,8 @@
       "title": "起型",
       "subtitle": "先把位置定住，加油！",
       "footer": "-S'y",
-      "autoClose": ""
+      "autoClose": "",
+      "warnPoints": "10，5"
      },
      {
       "label": "",
@@ -28,7 +29,8 @@
       "title": "铺大关系",
       "subtitle": "明暗大胆压，别抠细节",
       "footer": "-S'y",
-      "autoClose": ""
+      "autoClose": "",
+      "warnPoints": "10，5"
      },
      {
       "label": "",
@@ -36,7 +38,8 @@
       "title": "揉擦",
       "subtitle": "你得擦完是个人吧",
       "footer": "-S'y",
-      "autoClose": ""
+      "autoClose": "",
+      "warnPoints": "15，5"
      },
      {
       "label": "",
@@ -44,7 +47,8 @@
       "title": "进一步细化",
       "subtitle": "画前再推远看看大关系",
       "footer": "-S'y",
-      "autoClose": ""
+      "autoClose": "",
+      "warnPoints": "10"
      }
     ],
     "endMeta": {
@@ -73,7 +77,8 @@
       "subtitle": "抓动态，别磨蹭",
       "footer": "-S'y",
       "autoClose": "",
-      "voice": "voices/gmwesib3l15jl-0-1794590569136.m4a"
+      "voice": "voices/gmwesib3l15jl-0-1794590569136.m4a",
+      "warnPoints": "10，5"
      },
      {
       "label": "",
@@ -81,7 +86,8 @@
       "title": "画人",
       "subtitle": "大胆下笔，别描线",
       "footer": "-S'y",
-      "autoClose": ""
+      "autoClose": "",
+      "warnPoints": "15，5"
      },
      {
       "label": "",
@@ -89,7 +95,8 @@
       "title": "画背景",
       "subtitle": "几笔带过，别抢主体",
       "footer": "-S'y",
-      "autoClose": ""
+      "autoClose": "",
+      "warnPoints": "5"
      }
     ],
     "endMeta": {
@@ -119,7 +126,8 @@
       "title": "起型",
       "subtitle": "加油宝贝们！",
       "footer": "-S'y",
-      "autoClose": 3
+      "autoClose": 3,
+      "warnPoints": "5"
      },
      {
       "label": "",
@@ -127,7 +135,8 @@
       "title": "铺大色",
       "subtitle": "咋样了～！",
       "footer": "-S'y",
-      "autoClose": ""
+      "autoClose": "",
+      "warnPoints": "15，5"
      },
      {
       "label": "",
@@ -135,7 +144,8 @@
       "title": "主体物塑造",
       "subtitle": "该抠细节了，往实里画",
       "footer": "-S'y",
-      "autoClose": ""
+      "autoClose": "",
+      "warnPoints": "10，5"
      },
      {
       "label": "",
@@ -143,7 +153,8 @@
       "title": "收尾",
       "subtitle": "快画！死手，快快快！",
       "footer": "-S'y",
-      "autoClose": ""
+      "autoClose": "",
+      "warnPoints": "5"
      },
      {
       "label": "",
@@ -151,7 +162,8 @@
       "title": "要晾干哦！",
       "subtitle": "",
       "footer": "-S'y",
-      "autoClose": ""
+      "autoClose": "",
+      "warnPoints": "10"
      }
     ],
     "endMeta": {
