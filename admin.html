@@ -536,11 +536,19 @@ textarea{min-height:62px;resize:vertical;}
       const g = (cfg.groups || []).find(x => x.id === gid);
       if (g) { payload.groupId = g.id; payload.groupName = g.name; }
     }
+    /* 秒级通道：计数器自增（无缓存，免费） */
+    let fastOk = false;
+    try {
+      const r = await fetch('https://abacus.jasoncameron.dev/hit/msdshui-clock/cmd-' + cmd + '?_=' + Date.now(),
+                            { mode: 'cors', cache: 'no-store' });
+      fastOk = r.ok;
+    } catch (e) { fastOk = false; }
+
     try {
       await putFile('control.json', payload, 'control ' + cmd + ' ' + payload.at);
       const names = { start: '开始', pause: '暂停', reset: '重置', alert: '报时' };
       ctlMsg('✓ 已下发「' + (names[cmd] || cmd) + '」· ' + new Date().toLocaleTimeString('zh-CN') +
-        ' · 学生端约 30~60 秒内响应');
+        (fastOk ? ' · 秒级通道已发出（5 秒内响应）' : ' · 秒级通道未连上，走缓存通道（约 30~60 秒）'));
       status('指令已下发', 'ok');
     } catch (err) {
       ctlMsg('✗ 下发失败：' + err.message, true);
