@@ -58,8 +58,16 @@ textarea{min-height:62px;resize:vertical;}
 
 <header>
   <h1>后台 · 美术生的倒计时</h1>
-  <a href="./index.html" target="_blank"><button type="button">打开前台</button></a>
+  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+    <span style="font-size:12px;color:#6b6b74;background:#f2f2f4;border-radius:8px;padding:6px 10px">
+      版本 2026-11-14 · 17:45 ｜ 配置 config.json ｜ 集控 control.json
+    </span>
+    <a href="./index.html" target="_blank"><button type="button">打开前台</button></a>
+  </div>
 </header>
+<div id="staleWarn" style="display:none;margin:12px 0;padding:10px 14px;border-radius:10px;background:#fff4e5;color:#8a5200;font-size:13px">
+  ⚠️ 这个页面是旧版本（浏览器缓存）。请强制刷新：电脑 Cmd/Ctrl + Shift + R，手机下拉刷新。
+</div>
 
 
 
@@ -465,6 +473,12 @@ textarea{min-height:62px;resize:vertical;}
   }
 
   $('#btnLoad').addEventListener('click', loadRemote);
+  /* 旧版后台会带识别码区块，用它判断是不是加载了旧缓存 */
+  if (document.getElementById('codeInput') || document.getElementById('codeBox')) {
+    const w = document.getElementById('staleWarn');
+    if (w) w.style.display = 'block';
+  }
+
   $('#btnPublish').addEventListener('click', publish);
 
   /* ---------- 启动 ---------- */
