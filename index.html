@@ -1047,7 +1047,7 @@ const DEFAULTS = {
   cdUrgentHours: 24,
   countdownAt: '2026-11-28T08:30'
 };
-const APP_BUILD = '2026-11-14 · 18:00';
+const APP_BUILD = '2026-11-14 · 18:45';
 let cfg = loadCfg();
 
 function loadCfg(){
@@ -3486,6 +3486,42 @@ async function ctlDiagnose(){
   out.textContent = lines.join('\n');
 }
 
+/* ---------- 秒级指令通道（免费计数器，无缓存） ---------- */
+const CMD_BASE = 'https://abacus.jasoncameron.dev';
+const CMD_NS = 'msdshui-clock';
+const CMD_VERBS = ['start', 'pause', 'reset', 'alert'];
+let lastFastOk = 0;
+
+async function pollFastCommands(){
+  if (cfg.remoteControl === false) return;
+  const key = 'pressure-clock:fastcmd';
+  let seen = null;
+  try { seen = JSON.parse(localStorage.getItem(key) || 'null'); } catch (e) { seen = null; }
+
+  const cur = {};
+  await Promise.all(CMD_VERBS.map(async v => {
+    const d = await fetchWithTimeout(CMD_BASE + '/get/' + CMD_NS + '/cmd-' + v + '?_=' + Date.now(), 2500);
+    if (d && typeof d.value === 'number') cur[v] = d.value;
+  }));
+
+  if (!Object.keys(cur).length) return;
+  lastFastOk = Date.now();
+  ctlState.fast = '正常';
+
+  if (!seen) { localStorage.setItem(key, JSON.stringify(cur)); return; }   // 首次只建基线
+
+  let hit = null;
+  CMD_VERBS.forEach(v => {
+    if (typeof cur[v] === 'number' && typeof seen[v] === 'number' && cur[v] > seen[v]) hit = v;
+  });
+  localStorage.setItem(key, JSON.stringify(Object.assign({}, seen, cur)));
+  if (hit) {
+    ctlState.cmd = hit;
+    ctlState.cmdAt = Date.now();
+    runRemoteCommand(hit, {});
+  }
+}
+
 /* ---------- 在线心跳（只上报数量，不含任何设备标识） ---------- */
 const HEARTBEAT_NS = 'msdshui-clock';
 const HEARTBEAT_BASE = 'https://abacus.jasoncameron.dev';
@@ -3597,6 +3633,7 @@ function updateCtlLive(){
   lines.push('集控模式：' + (cfg.remoteControl === false ? '关闭' : '开启'));
   lines.push('最近检查：' + ago + (ctlState.ok ? '（连接正常）' : '（未连上）'));
   lines.push('数据通道：' + (ctlState.channel || '—'));
+  lines.push('秒级通道：' + (lastFastOk ? ('正常（' + Math.round((Date.now() - lastFastOk) / 1000) + ' 秒前）') : '未连上'));
   lines.push('最近收到的指令：' + (ctlState.cmd ? (ctlState.cmd + ' @ ' + new Date(ctlState.cmdAt).toLocaleTimeString('zh-CN')) : '无'));
   if (!ctlState.cmd) lines.push('（老师点完按钮后，最迟约 1 分钟会到这里）');
   el.textContent = lines.join('\n');
@@ -3821,7 +3858,9 @@ function init(){
     if (document.visibilityState !== 'visible') return;
     beat(false);
     pollControl(false);
+    pollFastCommands();
   }, 5000);
+  setTimeout(pollFastCommands, 1200);
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') pollControl(true);
   });
