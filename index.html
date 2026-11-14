@@ -1611,14 +1611,17 @@ function restoreRun(){
   return true;
 }
 /* 识别码：不同码对应仓库里 codes/<码>.json 一整套独立配置 */
+function normCode(v){
+  return String(v || '').trim().replace(/\s+/g, '-').replace(/[\/\\?%*:|"<>]/g, '');
+}
 function cfgUrl(){
   let c = '';
-  try { c = String(cfg.accessCode || '').trim(); } catch (e) {}
+  try { c = normCode(cfg.accessCode); } catch (e) {}
   return c ? ('./codes/' + encodeURIComponent(c) + '.json') : './config.json';
 }
 function verKey(){
   let c = '';
-  try { c = String(cfg.accessCode || '').trim(); } catch (e) {}
+  try { c = normCode(cfg.accessCode); } catch (e) {}
   return 'pressure-clock:remote-version' + (c ? ':' + c : '');
 }
 
@@ -1826,7 +1829,11 @@ function applyRemoteConfig(){
   if (bt) bt.textContent = '程序版本 ' + APP_BUILD + '（如果这里不是最新的，说明页面还没刷新）';
   setTimeout(fitMainScreen, 120);
   pollControl(true);
-  setInterval(() => { if (document.visibilityState === 'visible') pollControl(false); }, 8000);
+  setInterval(() => { if (document.visibilityState === 'visible') pollControl(false); }, 5000);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') pollControl(true);
+  });
+  window.addEventListener('pageshow', () => pollControl(true));
   toast('已更新到最新配置');
 }
 
@@ -3089,7 +3096,7 @@ function bindEvents(){
 
   $('#btnApplyCode').addEventListener('click', () => {
     const el = document.getElementById('accessCodeInput');
-    const code = (el ? el.value : '').trim().slice(0, 40);
+    const code = normCode(el ? el.value : '').slice(0, 40);
     cfg.accessCode = code;
     saveCfg();
     try { localStorage.removeItem(verKey()); } catch (e) {}
@@ -3436,7 +3443,7 @@ async function requestWakeLock(){
 /* ---------- 后台集控（同一个识别码下的所有设备） ---------- */
 function controlUrl(){
   let c = '';
-  try { c = String(cfg.accessCode || '').trim(); } catch (e) {}
+  try { c = normCode(cfg.accessCode); } catch (e) {}
   return c ? ('./codes/' + encodeURIComponent(c) + '.control.json') : './control.json';
 }
 
@@ -3489,7 +3496,7 @@ function runRemoteCommand(cmd){
 let lastControlPoll = 0;
 async function pollControl(force){
   const now = Date.now();
-  if (!force && now - lastControlPoll < 7000) return;
+  if (!force && now - lastControlPoll < 4500) return;
   lastControlPoll = now;
   try {
     const r = await fetch(controlUrl() + '?t=' + now, { cache: 'no-store' });
