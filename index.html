@@ -3598,6 +3598,7 @@ function updateCtlLive(){
   lines.push('最近检查：' + ago + (ctlState.ok ? '（连接正常）' : '（未连上）'));
   lines.push('数据通道：' + (ctlState.channel || '—'));
   lines.push('最近收到的指令：' + (ctlState.cmd ? (ctlState.cmd + ' @ ' + new Date(ctlState.cmdAt).toLocaleTimeString('zh-CN')) : '无'));
+  if (!ctlState.cmd) lines.push('（老师点完按钮后，最迟约 1 分钟会到这里）');
   el.textContent = lines.join('\n');
 }
 async function pollControl(force){
