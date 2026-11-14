@@ -858,6 +858,10 @@ body.far-view #updateBar{bottom:calc(env(safe-area-inset-bottom,0px) + 80px);}
       <div class="row"><span>应用识别码</span>
         <button type="button" id="btnAccessCodeApply" class="btn small">加载这一套</button>
       </div>
+      <div class="row"><span>集控自检</span>
+        <button type="button" id="btnCtlCheck" class="btn small">检查一次</button>
+      </div>
+      <pre class="hint" id="ctlDiag" style="white-space:pre-wrap;font-size:12px;line-height:1.6">点「检查一次」看这台设备正在读哪条指令。</pre>
       <p class="hint">填写后立即从云端拉取这套配置，之后所有「更新」都只拉这一套。留空恢复默认配置。</p>
 
       <div class="row col">
@@ -3107,6 +3111,8 @@ function bindEvents(){
     syncAssetNames();
   });
 
+  $('#btnCtlCheck').addEventListener('click', () => { ctlDiagnose(); });
+
   $('#btnAccessCodeApply').addEventListener('click', () => {
     const el = document.getElementById('accessCodeInput');
     const code = normCode(el ? el.value : '').slice(0, 40);
@@ -3453,6 +3459,31 @@ async function requestWakeLock(){
 /* =========================================================
    11. 启动
    ========================================================= */
+/* 集控自检：把「设备看到的」和「记录的」都列出来 */
+async function ctlDiagnose(){
+  const out = document.getElementById('ctlDiag');
+  if (!out) return;
+  out.textContent = '检查中…';
+  const c = normCode(cfg.accessCode);
+  const key = 'pressure-clock:ctl:' + (c || 'default');
+  const seen = localStorage.getItem(key) || '0';
+  const lines = [];
+  lines.push('页面版本：' + APP_BUILD);
+  lines.push('识别码：' + (c || '（未设置，走默认频道）'));
+  lines.push('上次执行时间戳：' + seen);
+  lines.push('心跳上报：' + (cfg.heartbeat === false ? '关闭' : '开启'));
+  const paths = c
+    ? ['codes/' + encodeURIComponent(c) + '.control.json', 'control.json']
+    : ['control.json'];
+  for (const p of paths) {
+    const d = await fetchJsonFresh(p);
+    if (!d) { lines.push(p + ' → 读不到'); continue; }
+    const newer = Number(d.at) > Number(seen);
+    lines.push(p + ' → cmd=' + (d.cmd || '(空)') + '  at=' + d.at + (newer ? '  【新指令】' : '  （已执行过或为空）'));
+  }
+  out.textContent = lines.join('\n');
+}
+
 /* ---------- 在线心跳（只上报数量，不含任何设备标识） ---------- */
 const HEARTBEAT_NS = 'msdshui-clock';
 const HEARTBEAT_BASE = 'https://abacus.jasoncameron.dev';
@@ -3499,6 +3530,7 @@ function applyGroupSilently(idOrName){
 }
 
 function runRemoteCommand(cmd, payload){
+  try { toast('收到老师指令：' + ({start:'开始',pause:'暂停',reset:'重置',alert:'报时'}[cmd] || cmd)); } catch (e) {}
   if (cmd === 'start') {
     const want = payload && (payload.groupId || payload.groupName);
     if (want) {
@@ -3559,14 +3591,27 @@ async function pollControl(force){
   try {
     let c = '';
     try { c = normCode(cfg.accessCode); } catch (e) {}
-    const path = c ? ('codes/' + encodeURIComponent(c) + '.control.json') : 'control.json';
-    const d = await fetchJsonFresh(path);
-    if (!d || !d.cmd || !d.at) return;
+
+    /* 先看自己识别码的频道，再看公共频道（老师不设识别码也能广播到所有人） */
+    const paths = [];
+    if (c) paths.push('codes/' + encodeURIComponent(c) + '.control.json');
+    paths.push('control.json');
+
     const key = 'pressure-clock:ctl:' + ((cfg.accessCode || '').trim() || 'default');
     const seen = Number(localStorage.getItem(key) || 0);
-    if (Number(d.at) <= seen) return;
-    localStorage.setItem(key, String(d.at));
-    runRemoteCommand(d.cmd, d);
+
+    /* 两边都看，只执行最新的那一条，避免旧指令占用一轮 */
+    let best = null;
+    for (const path of paths) {
+      const d = await fetchJsonFresh(path);
+      if (!d || !d.cmd || !d.at) continue;
+      if (Number(d.at) <= seen) continue;
+      if (!best || Number(d.at) > Number(best.at)) best = d;
+    }
+    if (best) {
+      localStorage.setItem(key, String(best.at));
+      runRemoteCommand(best.cmd, best);
+    }
   } catch (e) {}
 }
 
