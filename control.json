@@ -1,4 +1,6 @@
 {
- "cmd": "reset",
- "at": 1794647203112
+ "cmd": "start",
+ "at": 1794647222825,
+ "groupId": "g-main",
+ "groupName": "素描"
 }
