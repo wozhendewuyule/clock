@@ -847,6 +847,11 @@ body.far-view #updateBar{bottom:calc(env(safe-area-inset-bottom,0px) + 80px);}
 
     <section data-cat="cloud">
       <h3>云端 · 识别码 · 搬到手机上</h3>
+      <div class="row"><span>上报在线人数（给集控用）</span>
+        <input type="checkbox" data-key="heartbeat">
+      </div>
+      <p class="hint">每分钟向一个公共计数器上报一次「这个识别码有设备在线」，不含任何个人信息。关掉后后台看不到在线数。</p>
+
       <div class="row"><span>识别码（不同码 = 一整套配置）</span>
         <input type="text" id="accessCodeInput" placeholder="留空 = 默认配置">
       </div>
@@ -1034,6 +1039,7 @@ const DEFAULTS = {
   endShowCountdown: true,
   countdownName: '联考',
   accessCode: '',
+  heartbeat: true,
   cdSoonDays: 7,
   cdUrgentHours: 24,
   countdownAt: '2026-11-28T08:30'
@@ -3435,6 +3441,32 @@ async function requestWakeLock(){
 /* =========================================================
    11. 启动
    ========================================================= */
+/* ---------- 在线心跳（只上报数量，不含任何设备标识） ---------- */
+const HEARTBEAT_NS = 'msdshui-clock';
+const HEARTBEAT_BASE = 'https://abacus.jasoncameron.dev';
+function heartbeatKey(bucket){
+  const c = normCode(cfg.accessCode) || 'default';
+  return c + '-' + bucket;
+}
+let lastBeatAt = 0;
+function beat(force){
+  if (cfg.heartbeat === false) return;
+  const now = Date.now();
+  const bucket = Math.floor(now / 60000);
+  /* 同一分钟只报一次（刷新页面也不重复计），避免在线数被刷高 */
+  try {
+    const memoKey = 'pressure-clock:beat:' + (normCode(cfg.accessCode) || 'default');
+    if (Number(localStorage.getItem(memoKey) || 0) === bucket) return;
+    localStorage.setItem(memoKey, String(bucket));
+  } catch (e) {}
+  if (!force && now - lastBeatAt < 55000) return;
+  lastBeatAt = now;
+  try {
+    const url = HEARTBEAT_BASE + '/hit/' + HEARTBEAT_NS + '/' + encodeURIComponent(heartbeatKey(bucket));
+    fetch(url, { cache: 'no-store', mode: 'cors' }).catch(() => {});
+  } catch (e) {}
+}
+
 /* ---------- 后台集控（同一个识别码下的所有设备） ---------- */
 function controlUrl(){
   let c = '';
@@ -3714,8 +3746,13 @@ function init(){
       .catch(() => {});
   }
 
+  beat(true);
   pollControl(true);
-  setInterval(() => { if (document.visibilityState === 'visible') pollControl(false); }, 5000);
+  setInterval(() => {
+    if (document.visibilityState !== 'visible') return;
+    beat(false);
+    pollControl(false);
+  }, 5000);
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') pollControl(true);
   });
