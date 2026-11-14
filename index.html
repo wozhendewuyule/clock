@@ -847,22 +847,20 @@ body.far-view #updateBar{bottom:calc(env(safe-area-inset-bottom,0px) + 80px);}
 
     <section data-cat="cloud">
       <h3>云端 · 识别码 · 搬到手机上</h3>
+      <div class="row"><span>集控模式（接受老师指令）</span>
+        <input type="checkbox" data-key="remoteControl">
+      </div>
+      <p class="hint">开启后，老师点「全体开始 / 暂停 / 重置」时这台设备会自动跟随。不想被控制就关掉。</p>
+
       <div class="row"><span>上报在线人数（给集控用）</span>
         <input type="checkbox" data-key="heartbeat">
       </div>
-      <p class="hint">每分钟向一个公共计数器上报一次「这个识别码有设备在线」，不含任何个人信息。关掉后后台看不到在线数。</p>
+      <p class="hint">每分钟向一个公共计数器上报一次「有设备在线」，不含任何个人信息。关掉后后台看不到在线数。</p>
 
-      <div class="row"><span>识别码（不同码 = 一整套配置）</span>
-        <input type="text" id="accessCodeInput" placeholder="留空 = 默认配置">
-      </div>
-      <div class="row"><span>应用识别码</span>
-        <button type="button" id="btnAccessCodeApply" class="btn small">加载这一套</button>
-      </div>
       <div class="row"><span>集控自检</span>
         <button type="button" id="btnCtlCheck" class="btn small">检查一次</button>
       </div>
       <pre class="hint" id="ctlDiag" style="white-space:pre-wrap;font-size:12px;line-height:1.6">点「检查一次」看这台设备正在读哪条指令。</pre>
-      <p class="hint">填写后立即从云端拉取这套配置，之后所有「更新」都只拉这一套。留空恢复默认配置。</p>
 
       <div class="row col">
         <span>配置码（不含语音/图片，纯文字）</span>
@@ -1042,13 +1040,13 @@ const DEFAULTS = {
   tickTock: false,
   endShowCountdown: true,
   countdownName: '联考',
-  accessCode: '',
   heartbeat: true,
+  remoteControl: true,
   cdSoonDays: 7,
   cdUrgentHours: 24,
   countdownAt: '2026-11-28T08:30'
 };
-const APP_BUILD = '2026-11-14 · 03:30';
+const APP_BUILD = '2026-11-14 · 17:45';
 let cfg = loadCfg();
 
 function loadCfg(){
@@ -1621,15 +1619,8 @@ function restoreRun(){
   return true;
 }
 /* 识别码：不同码对应仓库里 codes/<码>.json 一整套独立配置 */
-function normCode(v){
-  return String(v || '').trim().replace(/\s+/g, '-').replace(/[\/\\?%*:|"<>]/g, '');
-}
 const RAW_BASE = 'https://raw.githubusercontent.com/wozhendewuyule/clock/main/';
-function cfgPath(){
-  let c = '';
-  try { c = normCode(cfg.accessCode); } catch (e) {}
-  return c ? ('codes/' + encodeURIComponent(c) + '.json') : 'config.json';
-}
+function cfgPath(){ return 'config.json'; }
 function cfgUrl(){ return './' + cfgPath(); }
 
 /* 先试 raw（提交后立刻可见），失败再退回同源（GitHub Pages 有几分钟缓存） */
@@ -1645,11 +1636,7 @@ async function fetchJsonFresh(path){
   } catch (e) {}
   return null;
 }
-function verKey(){
-  let c = '';
-  try { c = normCode(cfg.accessCode); } catch (e) {}
-  return 'pressure-clock:remote-version' + (c ? ':' + c : '');
-}
+function verKey(){ return 'pressure-clock:remote-version'; }
 
 /* 从线上拉取已发布的配置：只提示，不自动覆盖，由用户决定 */
 let pendingRemote = null;
@@ -1823,11 +1810,8 @@ async function loadRemoteConfig(){
 function applyRemoteConfig(){
   const data = pendingRemote;
   if (!data) return;
-  const keepCode = cfg.accessCode || '';
   const merged = JSON.parse(JSON.stringify(DEFAULTS));
   Object.keys(merged).forEach(k => { if (data.config[k] !== undefined) merged[k] = data.config[k]; });
-  /* 识别码是「本机设置」，不能被云端配置里的空值冲掉 */
-  merged.accessCode = keepCode;
   cfg = merged;
   try { cfg.groups.forEach(g => normalizeGroup(g)); } catch (e) {}
   if (!cfg.groups || !cfg.groups.length) {
@@ -2415,8 +2399,6 @@ function fillForm(){
   }
   if ($('#settings') && !$('#settings').dataset.cat) $('#settings').dataset.cat = 'timer';
 
-  const acEl = document.getElementById('accessCodeInput');
-  if (acEl) acEl.value = cfg.accessCode || '';
   syncBgRows();
   renderGroupChips(true);
   updateSegSummary();
@@ -3113,15 +3095,6 @@ function bindEvents(){
 
   $('#btnCtlCheck').addEventListener('click', () => { ctlDiagnose(); });
 
-  $('#btnAccessCodeApply').addEventListener('click', () => {
-    const el = document.getElementById('accessCodeInput');
-    const code = normCode(el ? el.value : '').slice(0, 40);
-    cfg.accessCode = code;
-    saveCfg();
-    try { localStorage.removeItem(verKey()); } catch (e) {}
-    checkUpdateNow();
-  });
-
   $('#btnCompare').addEventListener('click', () => { openCompare(); });
   $('#btnBetaDemo').addEventListener('click', () => { startBetaDemo(); });
   $('#btnExitBetaDemo').addEventListener('click', () => { stopBetaDemo(); });
@@ -3464,17 +3437,14 @@ async function ctlDiagnose(){
   const out = document.getElementById('ctlDiag');
   if (!out) return;
   out.textContent = '检查中…';
-  const c = normCode(cfg.accessCode);
-  const key = 'pressure-clock:ctl:' + (c || 'default');
+  const key = 'pressure-clock:ctl:default';
   const seen = localStorage.getItem(key) || '0';
   const lines = [];
   lines.push('页面版本：' + APP_BUILD);
-  lines.push('识别码：' + (c || '（未设置，走默认频道）'));
+  lines.push('集控模式：' + (cfg.remoteControl === false ? '关闭' : '开启'));
   lines.push('上次执行时间戳：' + seen);
   lines.push('心跳上报：' + (cfg.heartbeat === false ? '关闭' : '开启'));
-  const paths = c
-    ? ['codes/' + encodeURIComponent(c) + '.control.json', 'control.json']
-    : ['control.json'];
+  const paths = ['control.json'];
   for (const p of paths) {
     const d = await fetchJsonFresh(p);
     if (!d) { lines.push(p + ' → 读不到'); continue; }
@@ -3487,10 +3457,7 @@ async function ctlDiagnose(){
 /* ---------- 在线心跳（只上报数量，不含任何设备标识） ---------- */
 const HEARTBEAT_NS = 'msdshui-clock';
 const HEARTBEAT_BASE = 'https://abacus.jasoncameron.dev';
-function heartbeatKey(bucket){
-  const c = normCode(cfg.accessCode) || 'default';
-  return c + '-' + bucket;
-}
+function heartbeatKey(bucket){ return 'default-' + bucket; }
 let lastBeatAt = 0;
 function beat(force){
   if (cfg.heartbeat === false) return;
@@ -3498,7 +3465,7 @@ function beat(force){
   const bucket = Math.floor(now / 60000);
   /* 同一分钟只报一次（刷新页面也不重复计），避免在线数被刷高 */
   try {
-    const memoKey = 'pressure-clock:beat:' + (normCode(cfg.accessCode) || 'default');
+    const memoKey = 'pressure-clock:beat:default';
     if (Number(localStorage.getItem(memoKey) || 0) === bucket) return;
     localStorage.setItem(memoKey, String(bucket));
   } catch (e) {}
@@ -3585,19 +3552,13 @@ function runRemoteCommand(cmd, payload){
 
 let lastControlPoll = 0;
 async function pollControl(force){
+  if (cfg.remoteControl === false) return;
   const now = Date.now();
   if (!force && now - lastControlPoll < 4500) return;
   lastControlPoll = now;
   try {
-    let c = '';
-    try { c = normCode(cfg.accessCode); } catch (e) {}
-
-    /* 先看自己识别码的频道，再看公共频道（老师不设识别码也能广播到所有人） */
-    const paths = [];
-    if (c) paths.push('codes/' + encodeURIComponent(c) + '.control.json');
-    paths.push('control.json');
-
-    const key = 'pressure-clock:ctl:' + ((cfg.accessCode || '').trim() || 'default');
+    const paths = ['control.json'];
+    const key = 'pressure-clock:ctl:default';
     const seen = Number(localStorage.getItem(key) || 0);
 
     /* 两边都看，只执行最新的那一条，避免旧指令占用一轮 */
@@ -3606,6 +3567,7 @@ async function pollControl(force){
       const d = await fetchJsonFresh(path);
       if (!d || !d.cmd || !d.at) continue;
       if (Number(d.at) <= seen) continue;
+
       if (!best || Number(d.at) > Number(best.at)) best = d;
     }
     if (best) {
