@@ -61,17 +61,7 @@ textarea{min-height:62px;resize:vertical;}
   <a href="./index.html" target="_blank"><button type="button">打开前台</button></a>
 </header>
 
-<section id="codeBox">
-  <h2>识别码</h2>
-  <p class="hint">不同识别码 = 仓库里一整套独立配置（<code>codes/码.json</code>）。留空则编辑默认配置。</p>
-  <label>识别码</label>
-  <input type="text" id="codeInput" placeholder="例如 ban1 或 色彩冲刺班" />
-  <div class="row" style="margin-top:10px">
-    <button type="button" id="btnLoadCode" class="primary">加载这一套</button>
-    <button type="button" id="btnClearCode">返回默认配置</button>
-  </div>
-  <p class="hint" id="codeState">当前：默认配置</p>
-</section>
+
 
 <section id="tokenBox">
   <h2>发布凭证</h2>
@@ -129,14 +119,8 @@ textarea{min-height:62px;resize:vertical;}
 <section>
   <h2>集控（同一识别码的所有设备）</h2>
   <p class="hint">点下面的按钮会把指令写到 <code>codes/码.control.json</code>（或 <code>control.json</code>）。前台开着的设备约 8 秒内响应。</p>
-  <div class="row">
-    <label style="flex:1;margin:0">发送范围</label>
-    <select id="ctlScope" style="flex:1">
-      <option value="all">所有设备（推荐）</option>
-      <option value="code">仅识别码相同的设备</option>
-    </select>
-  </div>
-  <p class="hint" id="ctlChannel" style="font-weight:600">集控频道：公共（所有设备）</p>
+  
+  <p class="hint" id="ctlChannel" style="font-weight:600">集控频道：所有设备共用</p>
   <div class="row">
     <label style="flex:1;margin:0">全体开始时切到</label>
     <select id="ctlGroup" style="flex:1"></select>
@@ -181,11 +165,8 @@ textarea{min-height:62px;resize:vertical;}
   'use strict';
   const REPO = 'wozhendewuyule/clock';
   const BRANCH = 'main';
-  let ACCESS_CODE = '';                 // 空 = 默认配置
-  function branchPath(){
-    const c = normCode(ACCESS_CODE);
-    return c ? ('codes/' + encodeURIComponent(c) + '.json') : 'config.json';
-  }
+  const ACCESS_CODE = '';
+  function branchPath(){ return 'config.json'; }
   const TOKEN_KEY = 'admin-token-v1';
 
   const $ = s => document.querySelector(s);
@@ -453,20 +434,7 @@ textarea{min-height:62px;resize:vertical;}
       if (!r || !r.ok) {
         r = await fetch('./' + branchPath() + '?t=' + Date.now(), { cache: 'no-store' });
       }
-      if (!r.ok) {
-        if (ACCESS_CODE) {
-          /* 新识别码还没有配置文件：从默认配置复制一份作为起点 */
-          const d2 = await fetch('./config.json?t=' + Date.now(), { cache: 'no-store' });
-          if (!d2.ok) throw new Error('HTTP ' + r.status);
-          const base = await d2.json();
-          cfg = base.config;
-          cfg.groups = (cfg.groups || []).map(normalize);
-          render();
-          status('识别码「' + ACCESS_CODE + '」是新的，已从默认配置复制，改完点发布即可');
-          return;
-        }
-        throw new Error('HTTP ' + r.status);
-      }
+      if (!r.ok) throw new Error('HTTP ' + r.status);
       const d = await r.json();
       cfg = d.config;
       cfg.groups = (cfg.groups || []).map(normalize);
@@ -497,136 +465,6 @@ textarea{min-height:62px;resize:vertical;}
   }
 
   $('#btnLoad').addEventListener('click', loadRemote);
-  function setCode(v){
-    ACCESS_CODE = v;
-    const el = document.getElementById('codeInput');
-    if (el) el.value = v;
-    const st = document.getElementById('codeState');
-    if (st) st.textContent = v ? ('当前：识别码「' + v + '」→ codes/' + v + '.json') : '当前：默认配置（config.json）';
-    const ch = document.getElementById('ctlChannel');
-    if (ch) ch.textContent = '集控频道：公共（所有设备）';
-  }
-
-  $('#btnLoadCode').addEventListener('click', async () => {
-    const el = document.getElementById('codeInput');
-    const v = (el ? el.value : '').trim().slice(0, 40);
-    setCode(v);
-    await loadRemote();
-  });
-  $('#btnClearCode').addEventListener('click', async () => {
-    setCode('');
-    await loadRemote();
-  });
-
-  const betaMap = [
-    ['pressurePack', 'check'], ['preWarn', 'check'], ['preWarnMin', 'num'],
-    ['tickTock', 'check'], ['cdSoonDays', 'num'], ['cdUrgentHours', 'num']
-  ];
-  betaMap.forEach(([id, kind]) => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    const apply = () => {
-      cfg[id] = kind === 'check' ? el.checked : Number(el.value);
-    };
-    el.addEventListener('change', apply);
-    el.addEventListener('input', apply);
-  });
-
-  function normCode(v){
-    return String(v || '').trim().replace(/\s+/g, '-').replace(/[\/\\?%*:|"<>]/g, '');
-  }
-
-  async function putFile(path, obj, message){
-    const token = localStorage.getItem(TOKEN_KEY);
-    const api = 'https://api.github.com/repos/' + REPO + '/contents/' + path;
-    const headers = {
-      'Authorization': 'Bearer ' + token,
-      'Accept': 'application/vnd.github+json',
-      'X-GitHub-Api-Version': '2022-11-28'
-    };
-    const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(obj, null, 1))));
-    let lastErr = null;
-    for (let attempt = 0; attempt < 2; attempt++) {
-      let sha = null;
-      try {
-        const g = await fetch(api + '?ref=' + BRANCH + '&t=' + Date.now(), { headers, cache: 'no-store' });
-        if (g.ok) { const j = await g.json(); sha = j.sha; }
-      } catch (e) {}
-      const body = { message: message, content: b64, branch: BRANCH };
-      if (sha) body.sha = sha;
-      const r = await fetch(api + '?t=' + Date.now(), {
-        method: 'PUT',
-        headers: Object.assign({ 'Content-Type': 'application/json' }, headers),
-        body: JSON.stringify(body),
-        cache: 'no-store'
-      });
-      if (r.ok) return await r.json();
-      const txt = await r.text();
-      lastErr = new Error('HTTP ' + r.status + ' ' + txt.slice(0, 120));
-      if (r.status !== 422) break;
-      await new Promise(res => setTimeout(res, 600));
-    }
-    throw lastErr;
-  }
-
-  async function sendControl(cmd){
-    const token = localStorage.getItem(TOKEN_KEY);
-    if (!token) { status('先设置 token 才能集控', 'err'); return; }
-    const code = normCode(ACCESS_CODE);
-    const scopeSel = document.getElementById('ctlScope');
-    const scope = scopeSel ? scopeSel.value : 'all';
-    const path = 'control.json';
-    status('下发中…');
-    try {
-      const payload = { cmd: cmd, at: Date.now() };
-      if (scope === 'code' && code) payload.code = code;
-      if (cmd === 'start') {
-        const sel = document.getElementById('ctlGroup');
-        const gid = sel && sel.value ? sel.value : cfg.activeGroupId;
-        const g = (cfg.groups || []).find(x => x.id === gid);
-        if (g) { payload.groupId = g.id; payload.groupName = g.name; }
-      }
-      await putFile(path, payload, 'control ' + cmd + ' ' + Date.now());
-      const st = document.getElementById('ctlState');
-      const scopeTxt = (scope === 'code' && code) ? ('仅识别码「' + code + '」') : '所有设备';
-      if (st) st.textContent = '已下发「' + cmd + '」· ' + new Date().toLocaleTimeString('zh-CN') + ' · 范围：' + scopeTxt;
-      status('指令已下发', 'ok');
-    } catch (err) {
-      status('下发失败：' + err.message, 'err');
-    }
-  }
-
-  const HB_BASE = 'https://abacus.jasoncameron.dev';
-  const HB_NS = 'msdshui-clock';
-
-  async function refreshOnline(){
-    const out = document.getElementById('onlineCount');
-    if (!out) return;
-    const code = normCode(ACCESS_CODE) || 'default';
-    const bucket = Math.floor(Date.now() / 60000);
-    const keys = [bucket, bucket - 1];
-    let best = 0;
-    let ok = false;
-    for (const b of keys) {
-      try {
-        const r = await fetch(HB_BASE + '/get/' + HB_NS + '/' + encodeURIComponent(code + '-' + b), { cache: 'no-store' });
-        if (!r.ok) continue;
-        const d = await r.json();
-        if (typeof d.value === 'number') { ok = true; best = Math.max(best, d.value); }
-      } catch (e) {}
-    }
-    out.textContent = ok ? (best + ' 台') : '—';
-  }
-
-  $('#btnRefreshOnline').addEventListener('click', refreshOnline);
-  setInterval(refreshOnline, 15000);
-  refreshOnline();
-
-  $('#btnCtlStart').addEventListener('click', () => sendControl('start'));
-  $('#btnCtlPause').addEventListener('click', () => sendControl('pause'));
-  $('#btnCtlReset').addEventListener('click', () => sendControl('reset'));
-  $('#btnCtlAlert').addEventListener('click', () => sendControl('alert'));
-
   $('#btnPublish').addEventListener('click', publish);
 
   /* ---------- 启动 ---------- */
