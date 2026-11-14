@@ -1828,12 +1828,6 @@ function applyRemoteConfig(){
   const bt = document.getElementById('buildTag');
   if (bt) bt.textContent = '程序版本 ' + APP_BUILD + '（如果这里不是最新的，说明页面还没刷新）';
   setTimeout(fitMainScreen, 120);
-  pollControl(true);
-  setInterval(() => { if (document.visibilityState === 'visible') pollControl(false); }, 5000);
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') pollControl(true);
-  });
-  window.addEventListener('pageshow', () => pollControl(true));
   toast('已更新到最新配置');
 }
 
@@ -3447,11 +3441,36 @@ function controlUrl(){
   return c ? ('./codes/' + encodeURIComponent(c) + '.control.json') : './control.json';
 }
 
-function runRemoteCommand(cmd){
+/* 集控用：不弹确认框地切到指定组 */
+function applyGroupSilently(idOrName){
+  if (!idOrName) return true;
+  let g = cfg.groups.find(x => x.id === idOrName);
+  if (!g) g = cfg.groups.find(x => x.name === idOrName);
+  if (!g) return false;
+  if (g.id !== cfg.activeGroupId) {
+    cfg.activeGroupId = g.id;
+    normalizeGroup(activeGroup());
+    saveCfg();
+    resetSession();
+    fillForm();
+    renderTicks();
+    tick();
+  }
+  return true;
+}
+
+function runRemoteCommand(cmd, payload){
   if (cmd === 'start') {
+    const want = payload && (payload.groupId || payload.groupName);
+    if (want) {
+      const ok = applyGroupSilently(want);
+      if (!ok) toast('老师的组「' + want + '」这台设备上没有');
+    }
     if (state !== 'running') {
-      if (state === 'idle') { accMs = 0; runStart = Date.now(); resetCues(); lastTickMinute = 0; }
-      else { runStart = Date.now() - accMs; }
+      accMs = 0;
+      runStart = Date.now();
+      resetCues();
+      lastTickMinute = 0;
       setState('running');
       enterImmersive();
       requestWakeLock();
@@ -3507,7 +3526,7 @@ async function pollControl(force){
     const seen = Number(localStorage.getItem(key) || 0);
     if (Number(d.at) <= seen) return;
     localStorage.setItem(key, String(d.at));
-    runRemoteCommand(d.cmd);
+    runRemoteCommand(d.cmd, d);
   } catch (e) {}
 }
 
@@ -3686,6 +3705,13 @@ function init(){
   if (preset) importPresetAssets(preset).catch(() => {});
   if (resumed) toast('已接上之前的计时');
   setTimeout(fitMainScreen, 120);
+  /* 集控轮询：启动即拉一次，之后 5 秒一次，回到前台立刻再拉 */
+  pollControl(true);
+  setInterval(() => { if (document.visibilityState === 'visible') pollControl(false); }, 5000);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') pollControl(true);
+  });
+  window.addEventListener('pageshow', () => pollControl(true));
   /* 线上有新配置时只弹提示，由用户决定是否跟随 */
   loadRemoteConfig().catch(() => {});
   /* 1.2 秒后音频还没解锁就提醒用户点一下屏幕 */
