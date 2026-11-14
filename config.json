@@ -1,6 +1,6 @@
 {
- "version": 1794594837616,
- "updatedAt": "2026-11-14 02:33",
+ "version": 1794640163728,
+ "updatedAt": "2026/11/14 15:09:23",
  "config": {
   "groups": [
    {
@@ -186,6 +186,10 @@
   "countdownAt": "2026-11-28T08:30",
   "endGentle": true,
   "endShowCountdown": true,
-  "cloudVoice": true
+  "cloudVoice": true,
+  "cdSoonDays": 14,
+  "cdUrgentHours": 240,
+  "pressurePack": true,
+  "tickTock": true
  }
 }
