@@ -1047,7 +1047,7 @@ const DEFAULTS = {
   cdUrgentHours: 24,
   countdownAt: '2026-11-28T08:30'
 };
-const APP_BUILD = '2026-11-14 · 17:50';
+const APP_BUILD = '2026-11-14 · 18:00';
 let cfg = loadCfg();
 
 function loadCfg(){
@@ -1624,17 +1624,48 @@ const RAW_BASE = 'https://raw.githubusercontent.com/wozhendewuyule/clock/main/';
 function cfgPath(){ return 'config.json'; }
 function cfgUrl(){ return './' + cfgPath(); }
 
-/* 先试 raw（提交后立刻可见），失败再退回同源（GitHub Pages 有几分钟缓存） */
+/* 同源与 raw 并行取，取「时间戳更新的那个」。
+   国内 raw 常被墙 → 3 秒超时后自动放弃；同源一定能连（但 GitHub Pages 有几分钟缓存）。 */
+function fetchWithTimeout(url, ms){
+  return new Promise(resolve => {
+    let done = false;
+    const finish = v => { if (!done) { done = true; resolve(v); } };
+    const ctl = ('AbortController' in window) ? new AbortController() : null;
+    const timer = setTimeout(() => { try { if (ctl) ctl.abort(); } catch (e) {} finish(null); }, ms);
+    fetch(url, { cache: 'no-store', mode: 'cors', signal: ctl ? ctl.signal : undefined })
+      .then(r => { clearTimeout(timer); return r.ok ? r.json() : null; })
+      .then(j => finish(j))
+      .catch(() => { clearTimeout(timer); finish(null); });
+  });
+}
+
+let rawFailures = 0;
+let rawSkipUntil = 0;
+
 async function fetchJsonFresh(path){
   const bust = '?_=' + Date.now();
+  let local = null, remote = null;
+  const tryRaw = Date.now() >= rawSkipUntil;
   try {
-    const r = await fetch(RAW_BASE + path + bust, { cache: 'no-store', mode: 'cors' });
-    if (r.ok) return await r.json();
+    const jobs = [
+      fetchWithTimeout('./' + path + '?t=' + Date.now(), 6000),
+      tryRaw ? fetchWithTimeout(RAW_BASE + path + bust, 2500) : Promise.resolve(null)
+    ];
+    const [a, b] = await Promise.all(jobs);
+    local = a; remote = b;
   } catch (e) {}
-  try {
-    const r2 = await fetch('./' + path + '?t=' + Date.now(), { cache: 'no-store' });
-    if (r2.ok) return await r2.json();
-  } catch (e) {}
+
+  if (tryRaw) {
+    if (remote) rawFailures = 0;
+    else if (++rawFailures >= 2) rawSkipUntil = Date.now() + 5 * 60 * 1000;   // 连续失败就先别试了
+  }
+  const atOf = d => (d && Number(d.at)) || (d && Number(d.version)) || 0;
+  if (local && remote) {
+    ctlState.channel = atOf(remote) >= atOf(local) ? 'raw（实时）' : '本站（有缓存）';
+    return atOf(remote) >= atOf(local) ? remote : local;
+  }
+  if (remote) { ctlState.channel = 'raw（实时）'; return remote; }
+  if (local) { ctlState.channel = '本站（有缓存）'; return local; }
   return null;
 }
 function verKey(){ return 'pressure-clock:remote-version'; }
@@ -3554,7 +3585,7 @@ function runRemoteCommand(cmd, payload){
 }
 
 let lastControlPoll = 0;
-let ctlState = { pollAt: 0, ok: false, cmd: '', cmdAt: 0, applied: 0 };
+let ctlState = { pollAt: 0, ok: false, cmd: '', cmdAt: 0, applied: 0, channel: '' };
 
 function updateCtlLive(){
   const el = document.getElementById('ctlLive');
@@ -3565,6 +3596,7 @@ function updateCtlLive(){
   lines.push('页面版本：' + APP_BUILD);
   lines.push('集控模式：' + (cfg.remoteControl === false ? '关闭' : '开启'));
   lines.push('最近检查：' + ago + (ctlState.ok ? '（连接正常）' : '（未连上）'));
+  lines.push('数据通道：' + (ctlState.channel || '—'));
   lines.push('最近收到的指令：' + (ctlState.cmd ? (ctlState.cmd + ' @ ' + new Date(ctlState.cmdAt).toLocaleTimeString('zh-CN')) : '无'));
   el.textContent = lines.join('\n');
 }
