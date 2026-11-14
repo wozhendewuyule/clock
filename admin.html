@@ -130,6 +130,14 @@ textarea{min-height:62px;resize:vertical;}
   <h2>集控（同一识别码的所有设备）</h2>
   <p class="hint">点下面的按钮会把指令写到 <code>codes/码.control.json</code>（或 <code>control.json</code>）。前台开着的设备约 8 秒内响应。</p>
   <div class="row">
+    <label style="flex:1;margin:0">发送范围</label>
+    <select id="ctlScope" style="flex:1">
+      <option value="all">所有设备（推荐）</option>
+      <option value="code">仅识别码相同的设备</option>
+    </select>
+  </div>
+  <p class="hint" id="ctlChannel" style="font-weight:600">集控频道：公共（所有设备）</p>
+  <div class="row">
     <label style="flex:1;margin:0">全体开始时切到</label>
     <select id="ctlGroup" style="flex:1"></select>
   </div>
@@ -495,6 +503,8 @@ textarea{min-height:62px;resize:vertical;}
     if (el) el.value = v;
     const st = document.getElementById('codeState');
     if (st) st.textContent = v ? ('当前：识别码「' + v + '」→ codes/' + v + '.json') : '当前：默认配置（config.json）';
+    const ch = document.getElementById('ctlChannel');
+    if (ch) ch.textContent = '集控频道：公共（所有设备）';
   }
 
   $('#btnLoadCode').addEventListener('click', async () => {
@@ -563,12 +573,13 @@ textarea{min-height:62px;resize:vertical;}
     const token = localStorage.getItem(TOKEN_KEY);
     if (!token) { status('先设置 token 才能集控', 'err'); return; }
     const code = normCode(ACCESS_CODE);
-    const path = code
-      ? ('codes/' + encodeURIComponent(code) + '.control.json')
-      : 'control.json';
+    const scopeSel = document.getElementById('ctlScope');
+    const scope = scopeSel ? scopeSel.value : 'all';
+    const path = 'control.json';
     status('下发中…');
     try {
       const payload = { cmd: cmd, at: Date.now() };
+      if (scope === 'code' && code) payload.code = code;
       if (cmd === 'start') {
         const sel = document.getElementById('ctlGroup');
         const gid = sel && sel.value ? sel.value : cfg.activeGroupId;
@@ -577,7 +588,8 @@ textarea{min-height:62px;resize:vertical;}
       }
       await putFile(path, payload, 'control ' + cmd + ' ' + Date.now());
       const st = document.getElementById('ctlState');
-      if (st) st.textContent = '已下发「' + cmd + '」· ' + new Date().toLocaleTimeString('zh-CN') + ' → ' + path;
+      const scopeTxt = (scope === 'code' && code) ? ('仅识别码「' + code + '」') : '所有设备';
+      if (st) st.textContent = '已下发「' + cmd + '」· ' + new Date().toLocaleTimeString('zh-CN') + ' · 范围：' + scopeTxt;
       status('指令已下发', 'ok');
     } catch (err) {
       status('下发失败：' + err.message, 'err');
