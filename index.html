@@ -851,6 +851,7 @@ body.far-view #updateBar{bottom:calc(env(safe-area-inset-bottom,0px) + 80px);}
         <input type="checkbox" data-key="remoteControl">
       </div>
       <p class="hint">开启后，老师点「全体开始 / 暂停 / 重置」时这台设备会自动跟随。不想被控制就关掉。</p>
+      <pre class="hint" id="ctlLive" style="white-space:pre-wrap;font-size:12px;line-height:1.6">集控状态加载中…</pre>
 
       <div class="row"><span>上报在线人数（给集控用）</span>
         <input type="checkbox" data-key="heartbeat">
@@ -1046,7 +1047,7 @@ const DEFAULTS = {
   cdUrgentHours: 24,
   countdownAt: '2026-11-28T08:30'
 };
-const APP_BUILD = '2026-11-14 · 17:45';
+const APP_BUILD = '2026-11-14 · 17:50';
 let cfg = loadCfg();
 
 function loadCfg(){
@@ -3497,7 +3498,9 @@ function applyGroupSilently(idOrName){
 }
 
 function runRemoteCommand(cmd, payload){
-  try { toast('收到老师指令：' + ({start:'开始',pause:'暂停',reset:'重置',alert:'报时'}[cmd] || cmd)); } catch (e) {}
+  const label = ({ start: '开始', pause: '暂停', reset: '重置', alert: '报时' }[cmd] || cmd);
+  try { showCue('📣 老师指令：' + label, '', 2400); } catch (e) {}
+  try { toast('收到老师指令：' + label); } catch (e) {}
   if (cmd === 'start') {
     const want = payload && (payload.groupId || payload.groupName);
     if (want) {
@@ -3551,6 +3554,20 @@ function runRemoteCommand(cmd, payload){
 }
 
 let lastControlPoll = 0;
+let ctlState = { pollAt: 0, ok: false, cmd: '', cmdAt: 0, applied: 0 };
+
+function updateCtlLive(){
+  const el = document.getElementById('ctlLive');
+  if (!el) return;
+  const now = Date.now();
+  const ago = ctlState.pollAt ? Math.round((now - ctlState.pollAt) / 1000) + ' 秒前' : '还没检查过';
+  const lines = [];
+  lines.push('页面版本：' + APP_BUILD);
+  lines.push('集控模式：' + (cfg.remoteControl === false ? '关闭' : '开启'));
+  lines.push('最近检查：' + ago + (ctlState.ok ? '（连接正常）' : '（未连上）'));
+  lines.push('最近收到的指令：' + (ctlState.cmd ? (ctlState.cmd + ' @ ' + new Date(ctlState.cmdAt).toLocaleTimeString('zh-CN')) : '无'));
+  el.textContent = lines.join('\n');
+}
 async function pollControl(force){
   if (cfg.remoteControl === false) return;
   const now = Date.now();
@@ -3560,12 +3577,15 @@ async function pollControl(force){
     const paths = ['control.json'];
     const key = 'pressure-clock:ctl:default';
     const seen = Number(localStorage.getItem(key) || 0);
+    ctlState.pollAt = now;
 
     /* 两边都看，只执行最新的那一条，避免旧指令占用一轮 */
     let best = null;
     for (const path of paths) {
       const d = await fetchJsonFresh(path);
+      if (d) ctlState.ok = true;
       if (!d || !d.cmd || !d.at) continue;
+      ctlState.cmd = d.cmd; ctlState.cmdAt = Number(d.at) || 0;
       if (Number(d.at) <= seen) continue;
 
       if (!best || Number(d.at) > Number(best.at)) best = d;
@@ -3762,6 +3782,8 @@ function init(){
 
   beat(true);
   pollControl(true);
+  setInterval(updateCtlLive, 1000);
+  updateCtlLive();
   setInterval(() => {
     if (document.visibilityState !== 'visible') return;
     beat(false);
