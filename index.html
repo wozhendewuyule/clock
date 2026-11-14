@@ -851,7 +851,7 @@ body.far-view #updateBar{bottom:calc(env(safe-area-inset-bottom,0px) + 80px);}
         <input type="text" id="accessCodeInput" placeholder="留空 = 默认配置">
       </div>
       <div class="row"><span>应用识别码</span>
-        <button type="button" id="btnApplyCode" class="btn small">加载这一套</button>
+        <button type="button" id="btnAccessCodeApply" class="btn small">加载这一套</button>
       </div>
       <p class="hint">填写后立即从云端拉取这套配置，之后所有「更新」都只拉这一套。留空恢复默认配置。</p>
 
@@ -2387,7 +2387,8 @@ function fillForm(){
       if (!b) return;
       $$('#setTabs button').forEach(x => x.classList.toggle('on', x === b));
       $('#settings').dataset.cat = b.dataset.cat;
-      $('#settings').scrollTop = 0;
+      const sb = document.querySelector('#settings .sheet-body');
+      if (sb) sb.scrollTop = 0;
     });
   }
   if ($('#settings') && !$('#settings').dataset.cat) $('#settings').dataset.cat = 'timer';
@@ -3088,7 +3089,7 @@ function bindEvents(){
     syncAssetNames();
   });
 
-  $('#btnApplyCode').addEventListener('click', () => {
+  $('#btnAccessCodeApply').addEventListener('click', () => {
     const el = document.getElementById('accessCodeInput');
     const code = normCode(el ? el.value : '').slice(0, 40);
     cfg.accessCode = code;
@@ -3706,6 +3707,13 @@ function init(){
   if (resumed) toast('已接上之前的计时');
   setTimeout(fitMainScreen, 120);
   /* 集控轮询：启动即拉一次，之后 5 秒一次，回到前台立刻再拉 */
+  /* 主动让 SW 检查更新，避免长期停留在旧缓存 */
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistration()
+      .then(r => { if (r) r.update(); })
+      .catch(() => {});
+  }
+
   pollControl(true);
   setInterval(() => { if (document.visibilityState === 'visible') pollControl(false); }, 5000);
   document.addEventListener('visibilitychange', () => {
