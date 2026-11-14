@@ -437,7 +437,14 @@ textarea{min-height:62px;resize:vertical;}
   async function loadRemote(){
     status('读取中…');
     try {
-      const r = await fetch('./' + branchPath() + '?t=' + Date.now(), { cache: 'no-store' });
+      const RAW = 'https://raw.githubusercontent.com/' + REPO + '/' + BRANCH + '/';
+      let r = null;
+      try {
+        r = await fetch(RAW + branchPath() + '?_=' + Date.now(), { cache: 'no-store' });
+      } catch (e) { r = null; }
+      if (!r || !r.ok) {
+        r = await fetch('./' + branchPath() + '?t=' + Date.now(), { cache: 'no-store' });
+      }
       if (!r.ok) {
         if (ACCESS_CODE) {
           /* 新识别码还没有配置文件：从默认配置复制一份作为起点 */
